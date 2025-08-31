@@ -1,60 +1,60 @@
 spring:
   application:
     name: gateway
-  server:
-    port: 8083
 
   cloud:
     gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-          routes:
-            - id: auth-service
-             # uri: lb://auth-service
-              uri: http://localhost:8081
-              predicates:
-                - Path=/auth/**
-              filters:
-                - name: CircuitBreaker
-                  args:
-                    name: authServiceCircuitBreaker
-                    fallbackUri: forward:/fallback/auth
+      routes:
+        - id: auth-service
+          uri: http://authservice:8081
+          predicates:
+            - Path=/auth/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: authServiceCircuitBreaker
+                fallbackUri: forward:/fallback/auth
 
-            - id: user-service
-              #uri: lb://user-service
-              uri: http://localhost:8080
-              predicates:
-                - Path=/api/users/**,/api/cards/**
-              filters:
-                - name: CircuitBreaker
-                  args:
-                    name: userServiceCircuitBreaker
-                    fallbackUri: forward:/fallback/user
+        - id: user-service
+          uri: http://userservice:8080
+          predicates:
+            - Path=/api/users/**,/api/cards/**
+            #- Path=/api/users/**
+            #- Path=/api/cards/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/user
 
-            - id: order-service
-              #uri: lb://order-service
-              uri: http://localhost:8082
-              predicates:
-                - Path=/api/items/**,/api/orders/**,/api/order-items/**
-              filters:
-                - name: CircuitBreaker
-                  args:
-                   name: orderServiceCircuitBreaker
-                   fallbackUri: forward:/fallback/order
-          httpclient:
-            connect-timeout: 1000
-            response-timeout: 5000
+        - id: order-service
+          uri: http://orderservice:8082
+          predicates:
+            - Path=/api/items/**,/api/orders/**,/api/order-items/**
+            #- Path=/api/items/**
+            #- Path=/api/orders/**
+            #- Path=/api/order-items/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order
 
-#For WebClient
+      httpclient:
+        connect-timeout: 1000
+        response-timeout: 5000
+
+server:
+  port: 8083
+
+# For WebClient
 services:
   userservice:
-    url: http://localhost:8080
+    url: http://userservice:8080
   authservice:
-    url: http://localhost:8081
+    url: http://authservice:8081
+  orderservice:
+    url: http://orderservice:8082
 
 logging:
   level:
@@ -78,9 +78,9 @@ springdoc:
     urls:
       - url: /api-docs
         name: Gateway API
-      - url: http://localhost:8081/v3/api-docs
+      - url: http://authservice:8081/v3/api-docs
         name: Auth Service
-      - url: http://localhost:8080/v3/api-docs
+      - url: http://userservice:8080/v3/api-docs
         name: User Service
-      - url: http://localhost:8082/v3/api-docs
+      - url: http://orderservice:8082/v3/api-docs
         name: Order Service

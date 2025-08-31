@@ -9,5 +9,5 @@ COPY src/main/resources/keys /app/keys
 
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-Dspring.config.location=classpath:/application-prod.yaml", "-jar", "app.jar"]
 

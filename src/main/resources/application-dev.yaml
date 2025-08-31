@@ -1,8 +1,6 @@
 spring:
   application:
     name: gateway
-  server:
-    port: 8083
 
   cloud:
     gateway:
@@ -29,6 +27,8 @@ spring:
               uri: http://localhost:8080
               predicates:
                 - Path=/api/users/**,/api/cards/**
+                #- Path=/api/users/**
+                #- Path=/api/cards/**
               filters:
                 - name: CircuitBreaker
                   args:
@@ -40,6 +40,9 @@ spring:
               uri: http://localhost:8082
               predicates:
                 - Path=/api/items/**,/api/orders/**,/api/order-items/**
+                #- Path=/api/items/**
+                #- Path=/api/orders/**
+                #- Path=/api/order-items/**
               filters:
                 - name: CircuitBreaker
                   args:
@@ -48,6 +51,8 @@ spring:
           httpclient:
             connect-timeout: 1000
             response-timeout: 5000
+server:
+  port: 8083
 
 #For WebClient
 services:

@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  gateway:
+    env_file: .env
+    build: ./gateway
+    ports:
+      - "8083:8083"  # !!!Only gateway exposes ports to outside
+    depends_on:
+      - userservice
+      - authservice
+      - orderservice
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVICES_USERSERVICE_URL=http://userservice:8080
+      - SERVICES_AUTHSERVICE_URL=http://authservice:8081
+      - SERVICES_ORDERSERVICE_URL=http://orderservice:8082
+      - SERVER_PORT=8083
+    networks:
+      - myproject-network
+
+  userservice:
+    env_file: .env
+    build: ./userservice # Builds an image from the Dockerfile in the current directory
+    expose:
+      - "8080"
+    depends_on: # Define service dependencies that must be started first
+      postgres:
+        condition: service_healthy # Wait until postgres healthcheck passes
+      redis:
+        condition: service_healthy # Wait until redis healthcheck passes
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod # activate application-prod.properties
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_LIQUIBASE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable
+      - SPRING_LIQUIBASE_USER=${DB_USER}
+      - SPRING_LIQUIBASE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=${REDIS_HOST}
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+    networks:
+      - myproject-network
+
+  authservice:
+    env_file: .env
+    build: ./authservice # Builds an image from the Dockerfile in the current directory
+    expose:
+      - "8081"
+    depends_on: # Define service dependencies that must be started first
+      postgres:
+        condition: service_healthy # Wait until postgres healthcheck passes
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod # activate application-prod.properties
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_AUTH_NAME}?sslmode=disable
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_LIQUIBASE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_AUTH_NAME}?sslmode=disable
+      - SPRING_LIQUIBASE_USER=${DB_USER}
+      - SPRING_LIQUIBASE_PASSWORD=${DB_PASSWORD}
+    networks:
+      - myproject-network
+    
+  orderservice:
+    env_file: .env
+    build: ./orderservice # Builds an image from the Dockerfile in the current directory
+    expose:
+      - "8082"
+    depends_on: # Define service dependencies that must be started first
+      postgres:
+        condition: service_healthy # Wait until postgres healthcheck passes
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod # activate application-prod.properties
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_ORDER_NAME}?sslmode=disable
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_LIQUIBASE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_ORDER_NAME}?sslmode=disable
+      - SPRING_LIQUIBASE_USER=${DB_USER}
+      - SPRING_LIQUIBASE_PASSWORD=${DB_PASSWORD}
+    networks:
+      - myproject-network
+
+  postgres:
+    image: postgres:15
+    env_file: .env
+    environment:
+      POSTGRES_DB: userserviceDB  # Creates a DB on startup
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    expose:
+      - "5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # Saves data to "volume"
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf  # Enable custom pg_hba.conf
+    healthcheck: # Container Health Check
+      test: ["CMD-SHELL", "pg_isready -U postgres"]  # Check command
+      interval: 5s # Checking every 5 seconds
+      timeout: 5s # Checking timeout
+      retries: 5 # Number of attempts
+    networks:
+      - myproject-network
+
+  redis:
+    image: redis:7
+    command: redis-server --save 60 1 --loglevel warning # command without password
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]  # without password
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myproject-network
+
+volumes:
+  postgres-data: # Creates a named volume to store PostgreSQL data.
+
+networks: # added a network to make all services to be in the same network and the DNS error went away (userservice cannot find the redis service)
+  myproject-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16

@@ -27,22 +27,22 @@ Spring Cloud Gateway-based API gateway with JWT authentication, service routing,
 - `/swagger-ui.html` - API documentation
 - `/actuator/health` - Health monitoring
 
-🏗️ Build & Run
+## 🏗️ Build & Run
 mvn clean package
 java -jar target/gateway-0.0.1-SNAPSHOT.jar
 
-📦 Dependencies
+## 📦 Dependencies
 - Spring Cloud Gateway
 - Spring Security OAuth2 Resource Server
 - Resilience4j Circuit Breaker
 - SpringDoc OpenAPI
 - Lombok
 
-🩺 Health & Monitoring
+## 🩺 Health & Monitoring
 bash
 curl http://localhost:8083/actuator/health
 curl http://localhost:8083/actuator/gateway/routes
 
-🎯 Development vs Production
+## 🎯 Development vs Production
 - Development: Direct localhost routing (http://localhost:8080)
 - Production: Kubernetes service discovery (lb://service-name)
