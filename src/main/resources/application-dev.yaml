@@ -12,7 +12,6 @@ spring:
               lower-case-service-id: true
           routes:
             - id: auth-service
-             # uri: lb://auth-service
               uri: http://localhost:8081
               predicates:
                 - Path=/auth/**
@@ -23,12 +22,9 @@ spring:
                     fallbackUri: forward:/fallback/auth
 
             - id: user-service
-              #uri: lb://user-service
               uri: http://localhost:8080
               predicates:
                 - Path=/api/users/**,/api/cards/**
-                #- Path=/api/users/**
-                #- Path=/api/cards/**
               filters:
                 - name: CircuitBreaker
                   args:
@@ -36,18 +32,24 @@ spring:
                     fallbackUri: forward:/fallback/user
 
             - id: order-service
-              #uri: lb://order-service
               uri: http://localhost:8082
               predicates:
                 - Path=/api/items/**,/api/orders/**,/api/order-items/**
-                #- Path=/api/items/**
-                #- Path=/api/orders/**
-                #- Path=/api/order-items/**
               filters:
                 - name: CircuitBreaker
                   args:
                    name: orderServiceCircuitBreaker
                    fallbackUri: forward:/fallback/order
+
+            - id: payment-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/payments/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/order
           httpclient:
             connect-timeout: 1000
             response-timeout: 5000
@@ -89,3 +91,5 @@ springdoc:
         name: User Service
       - url: http://localhost:8082/v3/api-docs
         name: Order Service
+      - url: http://localhost:8084/v3/api-docs
+        name: Payment Service

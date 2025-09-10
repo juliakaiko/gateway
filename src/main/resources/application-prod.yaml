@@ -19,8 +19,6 @@ spring:
           uri: http://userservice:8080
           predicates:
             - Path=/api/users/**,/api/cards/**
-            #- Path=/api/users/**
-            #- Path=/api/cards/**
           filters:
             - name: CircuitBreaker
               args:
@@ -31,9 +29,16 @@ spring:
           uri: http://orderservice:8082
           predicates:
             - Path=/api/items/**,/api/orders/**,/api/order-items/**
-            #- Path=/api/items/**
-            #- Path=/api/orders/**
-            #- Path=/api/order-items/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order
+
+        - id: payment-service
+          uri: http://paymentservice:8084
+          predicates:
+            - Path=/api/payments/**
           filters:
             - name: CircuitBreaker
               args:
@@ -84,3 +89,6 @@ springdoc:
         name: User Service
       - url: http://orderservice:8082/v3/api-docs
         name: Order Service
+      - url: http://paymentservice:8084/v3/api-docs
+        name: Payment Service
+

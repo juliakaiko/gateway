@@ -37,10 +37,6 @@ public class RegistrationController {
                 .flatMap(userDto -> //flatMap for Mono<Tokens>, not Mono<Mono<Tokens>> (in "map" case)
                         authServiceWebClient.register(userResponse)
                                 .map(tokens -> ResponseEntity.ok(new RegistrationResponse(userDto, tokens)))
-                                /*.onErrorResume(e ->
-                                        userServiceWebClient.deleteUser(userDto.getUserId())
-                                                .then(Mono.error(new AuthServiceException("AuthService failed. User rolled back.")))
-                                )*/
                                 .onErrorResume(e ->
                                         userServiceWebClient.deleteUser(userDto.getUserId())
                                                 .onErrorResume(deleteError -> {
