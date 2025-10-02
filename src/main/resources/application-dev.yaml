@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            - id: auth-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/auth/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: authServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/auth
+
+            - id: user-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/users/**,/api/cards/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: userServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/user
+
+            - id: order-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/items/**,/api/orders/**,/api/order-items/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                   name: orderServiceCircuitBreaker
+                   fallbackUri: forward:/fallback/order
+
+            - id: payment-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/payments/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: paymentServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/payment
+          httpclient:
+            connect-timeout: 1000
+            response-timeout: 5000
+server:
+  port: 8080
+
+#For WebClient
+services:
+  authservice:
+    url: http://localhost:8081
+  orderservice:
+    url: http://localhost:8082
+  userservice:
+    url: http://localhost:8083
+
+logging:
+  level:
+    org.springframework.boot.web.embedded.netty: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    com.mymicroservice: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    urls:
+      - url: /api-docs
+        name: Gateway API
+      - url: http://localhost:8081/v3/api-docs
+        name: Auth Service
+      - url: http://localhost:8082/v3/api-docs
+        name: Order Service
+      - url: http://localhost:8083/v3/api-docs
+        name: User Service
+      - url: http://localhost:8084/v3/api-docs
+        name: Payment Service

@@ -1,0 +1,14 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+
+services:
+  userservice:
+    url: http://dummy
+  authservice:
+    url: http://dummy
+  orderservice:
+    url: http://dummy
