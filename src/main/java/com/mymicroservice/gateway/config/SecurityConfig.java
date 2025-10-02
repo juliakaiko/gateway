@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(
+                                "/actuator/health/**",
                                 "/register",
                                 "/auth/**",
                                 "/swagger-ui/**",

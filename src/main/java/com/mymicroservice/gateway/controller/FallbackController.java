@@ -23,4 +23,9 @@ public class FallbackController {
     public Mono<String> authFallback() {
         return Mono.just("Authentication Service is unavailable. Please try again later.");
     }
+
+    @GetMapping("/payment")
+    public Mono<String> paymentFallback() {
+        return Mono.just("Payment Service is unavailable. Please try again later.");
+    }
 }

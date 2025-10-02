@@ -16,7 +16,7 @@ spring:
                 fallbackUri: forward:/fallback/auth
 
         - id: user-service
-          uri: http://userservice:8080
+          uri: http://userservice:8083
           predicates:
             - Path=/api/users/**,/api/cards/**
           filters:
@@ -42,7 +42,7 @@ spring:
           filters:
             - name: CircuitBreaker
               args:
-                name: orderServiceCircuitBreaker
+                name: paymentServiceCircuitBreaker
                 fallbackUri: forward:/fallback/order
 
       httpclient:
@@ -50,16 +50,16 @@ spring:
         response-timeout: 5000
 
 server:
-  port: 8083
+  port: 8080
 
 # For WebClient
 services:
-  userservice:
-    url: http://userservice:8080
   authservice:
     url: http://authservice:8081
   orderservice:
     url: http://orderservice:8082
+  userservice:
+    url: http://userservice:8083
 
 logging:
   level:
@@ -83,12 +83,12 @@ springdoc:
     urls:
       - url: /api-docs
         name: Gateway API
-      - url: http://authservice:8081/v3/api-docs
+      - url: http://localhost:8081/v3/api-docs
         name: Auth Service
-      - url: http://userservice:8080/v3/api-docs
-        name: User Service
-      - url: http://orderservice:8082/v3/api-docs
+      - url: http://localhost:8082/v3/api-docs
         name: Order Service
-      - url: http://paymentservice:8084/v3/api-docs
+      - url: http://localhost:8083/v3/api-docs
+        name: User Service
+      - url: http://localhost:8084/v3/api-docs
         name: Payment Service
 

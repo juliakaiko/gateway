@@ -5,7 +5,7 @@ services:
     env_file: .env
     build: ./gateway
     ports:
-      - "8083:8083"  # !!!Only gateway exposes ports to outside
+      - "8083:8083"  # Only gateway exposes ports to outside
     depends_on:
       - userservice
       - authservice
@@ -49,7 +49,7 @@ services:
     build: ./authservice
     expose:
       - "8081"
-    depends_on: #
+    depends_on:
       postgres:
         condition: service_healthy
     environment:
@@ -62,7 +62,7 @@ services:
       - SPRING_LIQUIBASE_PASSWORD=${DB_PASSWORD}
     networks:
       - myproject-network
-    
+
   orderservice:
     env_file: .env
     build: ./orderservice
@@ -81,6 +81,7 @@ services:
       - SPRING_LIQUIBASE_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_ORDER_NAME}?sslmode=disable
       - SPRING_LIQUIBASE_USER=${DB_USER}
       - SPRING_LIQUIBASE_PASSWORD=${DB_PASSWORD}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - myproject-network
 
@@ -92,12 +93,14 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongodb
-      - kafka
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/paymentDB
-    command: [ "java", "-jar", "app.jar" ]
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - myproject-network
 
@@ -105,7 +108,7 @@ services:
     image: postgres:15
     env_file: .env
     environment:
-      POSTGRES_DB: userserviceDB  # Creates a DB on startup
+      POSTGRES_DB: userservicedb  # Creates a DB on startup
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     expose:
@@ -115,7 +118,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./pg_hba.conf:/etc/postgresql/pg_hba.conf  # Enable custom pg_hba.conf
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]  # Check command
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s # Checking every 5 seconds
       timeout: 5s # Checking timeout
       retries: 5 # Number of attempts
@@ -143,35 +146,67 @@ services:
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: [ "CMD-SHELL", "mongo --eval 'db.adminCommand(\"ping\")' || exit 1" ]
-      interval: 5s
-      retries: 5
+      test: [ "CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1 || exit 1" ]
+      interval: 10s
       timeout: 5s
-      start_period: 30s
+      retries: 5
+      start_period: 40s
     networks:
       - myproject-network
 
   kafka:
-    image: bitnami/kafka:3.7
+    image: apache/kafka:3.9.1
     container_name: kafka
     ports:
       - "9092:9092"
     environment:
-      - KAFKA_ENABLE_KRAFT=yes
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      - KAFKA_CFG_NODE_ID=1
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      - ALLOW_PLAINTEXT_LISTENER=yes
+      KAFKA_KRAFT_MODE: "yes"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_NODE_ID: "1"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    command:
+      - sh
+      - -c
+      - |
+        echo "Waiting for Kafka to start..."
+        cat > /tmp/server.properties << EOF
+        process.roles=broker,controller
+        node.id=1
+        controller.quorum.voters=1@kafka:9093
+        listeners=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+        advertised.listeners=PLAINTEXT://kafka:9092
+        listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+        controller.listener.names=CONTROLLER
+        inter.broker.listener.name=PLAINTEXT
+        log.dirs=/tmp/kraft-combined-logs
+        num.partitions=3 
+        num.recovery.threads.per.data.dir=1
+        offsets.topic.replication.factor=1
+        transaction.state.log.replication.factor=1
+        transaction.state.log.min.isr=1
+        EOF
+      
+        if [ ! -f /tmp/kraft-combined-logs/meta.properties ]; then
+          echo "Formatting Kafka storage..."
+          /opt/kafka/bin/kafka-storage.sh format -t $$CLUSTER_ID -c /tmp/server.properties --ignore-formatted
+        fi
+
+        echo "Starting Kafka..."
+        exec /opt/kafka/bin/kafka-server-start.sh /tmp/server.properties
     healthcheck:
-      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
       interval: 10s
-      retries: 5
-      timeout: 5s
-      start_period: 20s
+      retries: 10
+      timeout: 10s
+      start_period: 90s
     networks:
       - myproject-network
 
@@ -179,7 +214,7 @@ volumes:
   postgres-data:
   mongo_data:
 
-networks: # added a network to make all services to be in the same network and the DNS error went away (userservice cannot find the redis service)
+networks:
   myproject-network:
     driver: bridge
     ipam:

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -30,6 +31,12 @@ class AuthServiceWebClientTest {
 
     @Mock
     WebClient.RequestHeadersSpec requestHeadersSpec;
+
+    @Mock
+    WebClient.RequestHeadersUriSpec deleteRequestHeadersUriSpec;
+
+    @Mock
+    WebClient.RequestHeadersSpec deleteRequestHeadersSpec;
 
     @Mock
     WebClient.ResponseSpec responseSpec;
@@ -54,4 +61,22 @@ class AuthServiceWebClientTest {
                 .expectNext(tokenResponse)
                 .verifyComplete();
     }
+
+    @Test
+    void deleteUser_shouldReturnMonoResponseEntityVoid() {
+        Long userId = 123L;
+        ResponseEntity<Void> responseEntity = ResponseEntity.noContent().build();
+
+        // DELETE-mock
+        when(webClient.delete()).thenReturn(deleteRequestHeadersUriSpec);
+        when(deleteRequestHeadersUriSpec.uri("/auth/users/{id}", userId)).thenReturn(deleteRequestHeadersSpec);
+        when(deleteRequestHeadersSpec.headers(any())).thenReturn(deleteRequestHeadersSpec);
+        when(deleteRequestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenReturn(Mono.just(responseEntity));
+
+        StepVerifier.create(authServiceWebClient.deleteUser(userId))
+                .expectNext(responseEntity)
+                .verifyComplete();
+    }
+
 }
