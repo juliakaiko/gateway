@@ -1,5 +1,6 @@
 package com.mymicroservice.gateway.advice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mymicroservice.gateway.exception.AuthServiceException;
 import com.mymicroservice.gateway.util.ErrorItem;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +13,9 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ServerWebExchange;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -22,16 +23,33 @@ import java.util.stream.Collectors;
 public class GlobalAdvice {
 
     /**
-     * Handles validation exceptions for DTO fields when data fails validation annotations
-     * such as @Valid, @NotNull, @Size, @Pattern and others.
+     * Handles validation exceptions thrown when a DTO fails validation annotations
+     * such as @Valid, @NotNull, @NotBlank, @Size, @Past, @Email, and others.
      *
-     * @param e WebExchangeBindException containing validation error information
-     * @return ResponseEntity with an ErrorItem object containing:
-     *         - List of error messages
-     *         - URL
-     *         - Status code
-     *         - Timestamp
-     *         - HTTP 400 status (BAD_REQUEST)
+     * <p>This method captures field-specific validation errors and returns them
+     * in a structured format. Each field that failed validation is included
+     * in the `fieldErrors` map, where the key is the field name and the value
+     * is the corresponding validation message. Additionally, a general message,
+     * timestamp, request URL, and HTTP status code are included for context.
+     *
+     * <p>Example of the JSON response:
+     * <pre>
+     * {
+     *   "message": "Validation failed",
+     *   "fieldErrors": {
+     *       "name": "Name cannot be blank",
+     *       "birthDate": "Birth date must be in the past"
+     *   },
+     *   "timestamp": "2025-10-04 12:34",
+     *   "url": "/register",
+     *   "statusCode": 400
+     * }
+     * </pre>
+     *
+     * @param e the WebExchangeBindException containing validation errors for the request body
+     * @param exchange the ServerWebExchange representing the current HTTP request
+     * @return a ResponseEntity containing an ErrorItem with detailed field-level validation errors
+     *         and a HTTP 400 (BAD_REQUEST) status
      */
     @ExceptionHandler(WebExchangeBindException.class)
     public ResponseEntity<ErrorItem> handleWebExchangeBindException(
@@ -39,12 +57,16 @@ public class GlobalAdvice {
             ServerWebExchange exchange) {
 
         ErrorItem error = new ErrorItem();
-        String errors = e.getFieldErrors()
-                .stream()
-                .map(x -> x.getField() + ": " + x.getDefaultMessage())
-                .collect(Collectors.joining(", "));
 
-        error.setMessage("Validation error: " + errors);
+        Map<String, String> fieldErrors = e.getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                        x -> x.getField(),
+                        x -> x.getDefaultMessage(),
+                        (msg1, msg2) -> msg1 + "; " + msg2
+                ));
+
+        error.setFieldErrors(fieldErrors);
+        error.setMessage("Validation failed");
         error.setTimestamp(formatDate());
         error.setUrl(exchange.getRequest().getURI().toString());
         error.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -53,30 +75,33 @@ public class GlobalAdvice {
     }
 
     /**
-     * Handles validation exceptions for DTO fields when data fails validation annotations
-     * such as @Valid, @NotNull, @Size, @Pattern and others.
+     * Handles WebClientResponseException from downstream services.
+     * Tries to parse the response body as {@link ErrorItem} (including field-specific errors).
+     * If parsing fails, returns a generic "Server error".
      *
-     * @param e WebClientResponseException containing validation error information
-     * @return ResponseEntity with an ErrorItem object containing:
-     *         - List of error messages
-     *         - URL
-     *         - Status code
-     *         - Timestamp
-     *         - HTTP 400 status (BAD_REQUEST)
+     * @param e the exception from WebClient call
+     * @param exchange request context
+     * @return ResponseEntity with {@link ErrorItem} containing error details and HTTP status
      */
+
     @ExceptionHandler(WebClientResponseException.class)
     public ResponseEntity<ErrorItem> handleWebClientResponseException(
-            WebClientResponseException e,
-            ServerWebExchange exchange) {
+            WebClientResponseException e, ServerWebExchange exchange) {
 
-        ErrorItem error = new ErrorItem();
-        error.setMessage(e.getMessage());
-        error.setTimestamp(Instant.now().toString());
-        error.setUrl(exchange.getRequest().getURI().toString());
-        error.setStatusCode(HttpStatus.BAD_REQUEST.value());
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ErrorItem error = mapper.readValue(e.getResponseBodyAsString(), ErrorItem.class);
+            return new ResponseEntity<>(error, HttpStatus.valueOf(e.getRawStatusCode()));
+        } catch (Exception ex) {
+            ErrorItem error = new ErrorItem();
+            error.setMessage("Server error");
+            error.setTimestamp(formatDate());
+            error.setUrl(exchange.getRequest().getURI().toString());
+            error.setStatusCode(HttpStatus.BAD_REQUEST.value());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
     }
+
 
     /**
      * Handles authorization denied exceptions when a user lacks required permissions.

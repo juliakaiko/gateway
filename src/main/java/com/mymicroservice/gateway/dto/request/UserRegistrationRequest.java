@@ -29,12 +29,12 @@ public class UserRegistrationRequest implements Serializable {
     @Size(max = 50, message = "Surname must be less than 50 characters")
     private String surname;
 
-    @NotNull
+    @NotNull(message = "Birth date cannot be null")
     @Past(message = "Birth date must be in the past")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) //ISO.DATE = yyyy-MM-dd
     private LocalDate birthDate;
 
-    @Email(regexp="\\w+@\\w+\\.\\w+", message="Please provide a valid email address")
+    @Email(regexp="[\\w.]+@\\w+\\.\\w+", message="Please provide a valid email address") // [a-zA-Z0-9_] _ .
     @NotBlank(message = "Email address may not be blank")
     private String email;
 

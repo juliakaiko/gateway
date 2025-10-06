@@ -3,7 +3,6 @@ package com.mymicroservice.gateway.webclient;
 import com.mymicroservice.gateway.dto.response.AccessAndRefreshTokenResponse;
 import com.mymicroservice.gateway.dto.response.UserRegistrationResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -29,7 +28,7 @@ public class AuthServiceWebClient {
                 .bodyToMono(AccessAndRefreshTokenResponse.class);
     }
 
-    public Mono<ResponseEntity<Void>> deleteUser(Long userId) {
+    public Mono<Void> deleteUser(Long userId) {
         return webClient.delete()
                 .uri("/api/internal/auth/user/{id}", userId)
                 .headers(headers -> {
@@ -37,6 +36,8 @@ public class AuthServiceWebClient {
                     headers.set("X-Source-Service", "GATEWAY");
                 })
                 .retrieve()
-                .toBodilessEntity(); // Mono<ResponseEntity<Void>>
+                .toBodilessEntity() // ResponseEntity<Void>
+                .then(); // Mono<Void>
     }
+
 }

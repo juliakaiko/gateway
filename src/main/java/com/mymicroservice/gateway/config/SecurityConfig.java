@@ -5,15 +5,19 @@ import com.mymicroservice.gateway.security.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
 
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 
 @EnableWebFluxSecurity
@@ -24,7 +28,9 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(HttpMethod.OPTIONS, "/api/**").permitAll() //for frontend
                         .pathMatchers(
                                 "/actuator/health/**",
                                 "/register",
@@ -47,6 +53,24 @@ public class SecurityConfig {
                 .build();
     }
 
+    private CorsConfigurationSource corsConfigurationSource() {
+        return exchange -> {
+            CorsConfiguration config = new CorsConfiguration();
+            config.setAllowedOriginPatterns(Arrays.asList(
+                    "http://localhost:[*]",
+                    "http://innowise-project.local",
+                    "http://localhost:3000",
+                    "https://innowise-project.local",
+                    "http://127.0.0.1:[*]"
+            ));
+            config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+            config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+            config.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+            config.setAllowCredentials(true);
+            config.setMaxAge(3600L);
+            return config;
+        };
+    }
     /**
      * Creates and configures a ReactiveJwtDecoder for validating JWT tokens in Spring Security WebFlux.
      *

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -18,11 +19,26 @@ public class JwtAuthGatewayFilter implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        ServerHttpRequest request = exchange.getRequest();
+
+        String query = request.getURI().getQuery();
+        log.info("🔍 Gateway Filter - Path: {}, Query: {}", request.getURI().getPath(), query);
+
+        HttpMethod method = exchange.getRequest().getMethod();
+        if (method == HttpMethod.OPTIONS) {
+            return chain.filter(exchange);
+        }
+
         String path = exchange.getRequest().getURI().getPath();
 
-        // skip "login" and "register" without checking
-        if (path.contains("/login") || path.contains("/register")) {
-            return chain.filter(exchange);
+        if (path.contains("/login") || path.contains("/register") || path.contains("/auth/refresh")) {
+            ServerHttpRequest mutatedRequest = exchange.getRequest()
+                    .mutate()
+                    .header("X-Internal-Call", "true")
+                    .header("X-Source-Service", "GATEWAY")
+                    .build();
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
         }
 
         // checking for Authorization

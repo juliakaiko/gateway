@@ -68,8 +68,9 @@ services:
 logging:
   level:
     org.springframework.boot.web.embedded.netty: DEBUG
-    org.springframework.cloud.gateway: DEBUG
     com.mymicroservice: INFO
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.web: DEBUG
 
 management:
   endpoints:

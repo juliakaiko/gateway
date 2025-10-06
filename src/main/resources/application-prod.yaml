@@ -51,6 +51,7 @@ spring:
 
 server:
   port: 8080
+  address: 0.0.0.0  # 🔹 for Kubernetes: so that the Pod is accessible from the cluster, and not just within itself
 
 # For WebClient
 services:
@@ -64,8 +65,9 @@ services:
 logging:
   level:
     org.springframework.boot.web.embedded.netty: DEBUG
-    org.springframework.cloud.gateway: DEBUG
     com.mymicroservice: INFO
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.web: DEBUG
 
 management:
   endpoints:

@@ -63,20 +63,19 @@ class AuthServiceWebClientTest {
     }
 
     @Test
-    void deleteUser_shouldReturnMonoResponseEntityVoid() {
+    void deleteUser_shouldReturnMonoVoid() {
         Long userId = 123L;
-        ResponseEntity<Void> responseEntity = ResponseEntity.noContent().build();
 
         // DELETE-mock
         when(webClient.delete()).thenReturn(deleteRequestHeadersUriSpec);
-        when(deleteRequestHeadersUriSpec.uri("/auth/users/{id}", userId)).thenReturn(deleteRequestHeadersSpec);
+        when(deleteRequestHeadersUriSpec.uri("/api/internal/auth/user/{id}", userId))
+                .thenReturn(deleteRequestHeadersSpec);
         when(deleteRequestHeadersSpec.headers(any())).thenReturn(deleteRequestHeadersSpec);
         when(deleteRequestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.toBodilessEntity()).thenReturn(Mono.just(responseEntity));
+        when(responseSpec.toBodilessEntity()).thenReturn(Mono.just(ResponseEntity.noContent().build()));
 
         StepVerifier.create(authServiceWebClient.deleteUser(userId))
-                .expectNext(responseEntity)
-                .verifyComplete();
+                .verifyComplete(); // checking that Mono<Void> has completed successfully
     }
 
 }
