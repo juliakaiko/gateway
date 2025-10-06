@@ -10,11 +10,12 @@ Spring Cloud Gateway-based API gateway with JWT authentication, service routing,
 - **Reactive Architecture** - Built with WebFlux and reactive streams
 
 ## 📡 Services Routing
-| Service | Path Patterns | Destination |
-|---------|---------------|-------------|
-| auth-service | `/auth/**` | Authentication Service |
-| user-service | `/api/users/**`, `/api/cards/**` | User Management Service |
-| order-service | `/api/items/**`, `/api/orders/**`, `/api/order-items/**` | Order Service |
+| Service         | Path Patterns | Destination             |
+|-----------------|---------------|-------------------------|
+| auth-service    | `/auth/**` | Authentication Service  |
+| user-service    | `/api/users/**`, `/api/cards/**` | User Management Service |
+| order-service   | `/api/items/**`, `/api/orders/**`, `/api/order-items/**` | Order Service           |
+| payment-service | `/api/payments/**` | Payment Service         |
 
 ## 🔒 Security
 - JWT validation with RSA public key (`keys/public.pem`)
@@ -40,9 +41,6 @@ java -jar target/gateway-0.0.1-SNAPSHOT.jar
 
 ## 🩺 Health & Monitoring
 bash
-curl http://localhost:8083/actuator/health
-curl http://localhost:8083/actuator/gateway/routes
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/gateway/routes
 
-## 🎯 Development vs Production
-- Development: Direct localhost routing (http://localhost:8080)
-- Production: Kubernetes service discovery (lb://service-name)
