@@ -19,10 +19,6 @@ public class AuthServiceWebClient {
     public Mono<AccessAndRefreshTokenResponse> register(UserRegistrationResponse userResponse) {
         return webClient.post()
                 .uri("/auth/register")
-                .headers(headers -> {
-                    headers.set("X-Internal-Call", "true");
-                    headers.set("X-Source-Service", "GATEWAY");
-                })
                 .bodyValue(userResponse)
                 .retrieve()
                 .bodyToMono(AccessAndRefreshTokenResponse.class);
@@ -31,13 +27,9 @@ public class AuthServiceWebClient {
     public Mono<Void> deleteUser(Long userId) {
         return webClient.delete()
                 .uri("/api/internal/auth/user/{id}", userId)
-                .headers(headers -> {
-                    headers.set("X-Internal-Call", "true");
-                    headers.set("X-Source-Service", "GATEWAY");
-                })
                 .retrieve()
-                .toBodilessEntity() // ResponseEntity<Void>
-                .then(); // Mono<Void>
+                .toBodilessEntity()
+                .then();
     }
 
 }

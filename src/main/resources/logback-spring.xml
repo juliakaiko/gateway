@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="LOG_PATH" value="${user.dir}/logs"/>
+
+    <!-- Консольный лог -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Файловый JSON-лог с кастомной структурой -->
+    <appender name="TRACE_MDC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/trace-mdc.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/trace-mdc.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <!-- MDC поля -->
+                <mdc>
+                    <!-- Если указать keys, пишем их через <includeMdcKeyName> -->
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>serviceName</includeMdcKeyName>
+                    <includeMdcKeyName>path</includeMdcKeyName>
+                    <includeMdcKeyName>query</includeMdcKeyName>
+                </mdc>
+                <threadName />
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Логгер для трассировки -->
+    <logger name="TRACE_MDC_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="TRACE_MDC"/>
+    </logger>
+
+    <!-- Корневой логгер выводит только в консоль, не пишет в файл trace-mdc.log -->
+    <root level="INFO">
+        <!-- Сохраняем вывод в консоль -->
+        <appender-ref ref="CONSOLE"/>
+        <!-- Добавляем вывод в trace-mdc.log через TRACE_MDC -->
+        <!--<appender-ref ref="TRACE_MDC"/>-->
+    </root>
+
+</configuration>
+

@@ -10,6 +10,7 @@ spring:
           predicates:
             - Path=/auth/**
           filters:
+            - StripPrefix=0  # не удалять /auth из пути
             - name: CircuitBreaker
               args:
                 name: authServiceCircuitBreaker
@@ -20,6 +21,7 @@ spring:
           predicates:
             - Path=/api/users/**,/api/cards/**
           filters:
+            - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
@@ -30,6 +32,7 @@ spring:
           predicates:
             - Path=/api/items/**,/api/orders/**,/api/order-items/**
           filters:
+            - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
@@ -40,6 +43,7 @@ spring:
           predicates:
             - Path=/api/payments/**
           filters:
+            - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: paymentServiceCircuitBreaker

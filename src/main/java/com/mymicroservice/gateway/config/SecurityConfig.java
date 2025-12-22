@@ -57,11 +57,12 @@ public class SecurityConfig {
         return exchange -> {
             CorsConfiguration config = new CorsConfiguration();
             config.setAllowedOriginPatterns(Arrays.asList(
-                    "http://localhost:[*]",
                     "http://innowise-project.local",
                     "http://localhost:3000",
                     "https://innowise-project.local",
-                    "http://127.0.0.1:[*]"
+                    "http://127.0.0.1:[*]",
+                    "http://frontend",
+                    "http://gateway:8080"
             ));
             config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
             config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
