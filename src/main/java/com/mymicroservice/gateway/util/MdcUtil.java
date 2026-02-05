@@ -6,6 +6,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @UtilityClass
 public class MdcUtil {
@@ -15,20 +16,20 @@ public class MdcUtil {
     public static final String REQUEST_ID_HEADER = "X-Request-Id";
 
     /**
-     * Создает контекст Reactor с MDC значениями
+     * Creates a Reactor context with MDC values
      */
     public static Context createReactorContext() {
         String requestId = MDC.get(REQUEST_ID_KEY);
         String serviceName = MDC.get(SERVICE_NAME_KEY);
 
         return Context.of(
-                REQUEST_ID_KEY, Optional.ofNullable(requestId).orElse(""),
-                SERVICE_NAME_KEY, Optional.ofNullable(serviceName).orElse("")
+                REQUEST_ID_KEY, Optional.ofNullable(requestId).orElse(UUID.randomUUID().toString()),
+                SERVICE_NAME_KEY, Optional.ofNullable(serviceName).orElse("gateway")
         );
     }
 
     /**
-     * Восстанавливает MDC из контекста Reactor
+     * Restores the MDC from the Reactor context
      */
     public static void restoreMdc(Context context) {
         if (context.hasKey(REQUEST_ID_KEY)) {
@@ -46,7 +47,7 @@ public class MdcUtil {
     }
 
     /**
-     * Устанавливает MDC значения
+     * Sets the MDC values
      */
     public static void setMdc(String requestId, String serviceName) {
         if (requestId != null && !requestId.isEmpty()) {
@@ -58,23 +59,23 @@ public class MdcUtil {
     }
 
     /**
-     * Очищает MDC
+     * Cleans up the MDC
      */
     public static void clearMdc() {
         MDC.clear();
     }
 
     /**
-     * Оператор для поддержания MDC в реактивной цепочке
+     * Operator for maintaining MDC in the reactive chain
      */
     public static <T> Mono<T> withMdc(Mono<T> mono) {
         return Mono.deferContextual(contextView -> {
-            // Восстанавливаем MDC из контекста
+            // Restoring MDC from context
             restoreMdc(Context.of(contextView));
             return mono
                     .contextWrite(ctx -> ctx.putAll(contextView))
                     .doOnEach(signal -> {
-                        // Поддерживаем MDC для каждого сигнала
+                        // Support MDC for each signal
                         if (signal.isOnNext() || signal.isOnComplete() || signal.isOnError()) {
                             restoreMdc(Context.of(contextView));
                         }

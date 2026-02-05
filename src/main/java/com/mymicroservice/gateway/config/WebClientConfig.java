@@ -20,6 +20,12 @@ public class WebClientConfig {
     @Value("${services.authservice.url}")
     private String authServiceUrl;
 
+    @Value("${services.orderservice.url}")
+    private String orderServiceUrl;
+
+    @Value("${services.paymentservice.url}")
+    private String paymentServiceUrl;
+
     @Bean("userServiceClient")
     public WebClient userServiceWebClient() {
         return WebClient.builder()
@@ -32,6 +38,22 @@ public class WebClientConfig {
     public WebClient authServiceWebClient() {
         return WebClient.builder()
                 .baseUrl(authServiceUrl)
+                .filter(mdcContextFilter())
+                .build();
+    }
+
+    @Bean("orderServiceClient")
+    public WebClient orderServiceWebClient() {
+        return WebClient.builder()
+                .baseUrl(orderServiceUrl)
+                .filter(mdcContextFilter())
+                .build();
+    }
+
+    @Bean("paymentServiceClient")
+    public WebClient paymentServiceWebClient() {
+        return WebClient.builder()
+                .baseUrl(paymentServiceUrl)
                 .filter(mdcContextFilter())
                 .build();
     }

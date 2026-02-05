@@ -3,6 +3,7 @@ package com.mymicroservice.gateway.advice;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mymicroservice.gateway.exception.AuthServiceException;
 import com.mymicroservice.gateway.util.ErrorItem;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,10 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Slf4j
+@RequiredArgsConstructor
 public class GlobalAdvice {
+
+    private final ObjectMapper objectMapper;
 
     /**
      * Handles validation exceptions thrown when a DTO fails validation annotations
@@ -89,8 +93,10 @@ public class GlobalAdvice {
             WebClientResponseException e, ServerWebExchange exchange) {
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            ErrorItem error = mapper.readValue(e.getResponseBodyAsString(), ErrorItem.class);
+            ErrorItem error = objectMapper.readValue(
+                    e.getResponseBodyAsString(),
+                    ErrorItem.class
+            );
             return new ResponseEntity<>(error, HttpStatus.valueOf(e.getRawStatusCode()));
         } catch (Exception ex) {
             ErrorItem error = new ErrorItem();
@@ -111,8 +117,8 @@ public class GlobalAdvice {
      */
     @ExceptionHandler({AuthorizationDeniedException.class})
     public ResponseEntity<ErrorItem> handleAuthorizationDeniedException(
-                                        AuthorizationDeniedException e,
-                                        ServerWebExchange exchange) {
+            AuthorizationDeniedException e,
+            ServerWebExchange exchange) {
         ErrorItem error = generateMessage(e, HttpStatus.FORBIDDEN, exchange);
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }

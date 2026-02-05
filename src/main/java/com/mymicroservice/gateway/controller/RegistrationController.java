@@ -10,8 +10,6 @@ import com.mymicroservice.gateway.util.MdcUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,17 +26,16 @@ public class RegistrationController {
     private final AuthServiceWebClient authServiceWebClient;
     private final ResponseUtil responseUtil;
 
-    private static final Logger TRACE_MDC_LOGGER = LoggerFactory.getLogger("TRACE_MDC_LOGGER");
 
     @PostMapping
     public Mono<ResponseEntity<RegistrationResponse>> register(
             @RequestBody @Valid UserRegistrationRequest request) {
 
-        // Используем MdcUtil.withMdc для поддержания контекста
+        // We use MdcUtil.withMdc to maintain the context
         return MdcUtil.withMdc(
                 Mono.fromCallable(() -> {
-                            // Логируем - MDC уже установлен
-                            TRACE_MDC_LOGGER.info("Register request: {}", request);
+                            // Logging in - MDC is already installed
+                            log.info("Register request: {}", request);
                             return responseUtil.generateUserResponse(request);
                         })
                         .flatMap(userResponse ->
@@ -49,7 +46,7 @@ public class RegistrationController {
                                                         .onErrorResume(e ->
                                                                 userServiceWebClient.deleteUser(userDto.getUserId())
                                                                         .onErrorResume(deleteError -> {
-                                                                            TRACE_MDC_LOGGER.error("Failed to rollback user creation: {}",
+                                                                            log.error("Failed to rollback user creation: {}",
                                                                                     deleteError.getMessage());
                                                                             return Mono.empty();
                                                                         })
