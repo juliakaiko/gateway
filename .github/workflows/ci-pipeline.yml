@@ -1,0 +1,102 @@
+name: CI Pipeline for Spring Boot JAR (Gateway)
+
+on:
+  push:
+    branches:
+      - branch1
+      - main
+      - branch2_tracing
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Clone the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full commit history (needed for Sonar analysis and versioning)
+
+      # 2. Cache Maven dependencies (speeds up builds)
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 3. Set up JDK 21
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # 4. Verify Docker is available
+      - name: Check Docker status
+        run: docker info
+
+      # 5.1. Maven downloads common-events from GitHub Packages to Actions
+      - name: Set up Maven settings.xml for GitHub Packages
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${GITHUB_ACTOR}</username>
+                <password>${{ secrets.GITHUB_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>" > ~/.m2/settings.xml
+
+      # 5.2. Build and test with Maven
+      - name: Build and test with Maven
+        env:
+          MAVEN_OPTS: "-Dmaven.repo.local=.m2"      # Use local Maven cache
+        run: |
+          mvn -B clean install -e -X -Dspring.test.constructor.autowire.mode=all
+          pkill -f surefirebooter || true           # Kill any stuck test processes
+
+      # 7. Upload test reports if tests fail
+      - name: Upload Surefire Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      # 8. Prepare JAR for SonarCloud analysis
+      - name: Prepare for Sonar analysis
+        run: |
+          mkdir -p target/unpacked-libs
+          unzip -q -j target/*.jar 'BOOT-INF/lib/*.jar' -d target/unpacked-libs || echo "No libraries found in JAR"
+
+      # 9. Static code analysis with SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.projectKey=juliakaiko_gateway
+            -Dsonar.projectName=gateway
+            -Dsonar.organization=juliakaiko
+            -Dsonar.java.binaries=target/classes
+            -Dsonar.java.libraries=target/unpacked-libs/*.jar
+
+      # 10. Log in to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.TOKEN_FOR_GATEWAY }}
+
+      # 11. Build and push Docker image (using local Docker socket)
+      - name: Build and Push Docker Image
+        if: success()
+        run: |
+          docker build -t juliakaiko94/gateway:latest .
+          docker push juliakaiko94/gateway:latest
