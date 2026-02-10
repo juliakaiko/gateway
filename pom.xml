@@ -19,6 +19,7 @@
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<org.projectlombok.version>1.18.32</org.projectlombok.version>
 		<springdoc-openapi.version>2.8.10</springdoc-openapi.version>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
 	</properties>
 
 	<dependencies>
@@ -99,7 +100,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.4</version> <!-- или последняя доступная -->
+            <version>${logstash-logback-encoder.version}</version>
         </dependency>
 
 		<dependency>

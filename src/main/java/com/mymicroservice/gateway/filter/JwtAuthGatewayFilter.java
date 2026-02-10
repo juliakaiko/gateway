@@ -2,6 +2,7 @@ package com.mymicroservice.gateway.filter;
 
 import com.mymicroservice.gateway.util.MdcUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -21,7 +22,9 @@ import java.util.UUID;
 @Slf4j
 public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
 
-    private static final String SERVICE_NAME = "GATEWAY";
+    @Value("${spring.application.name}")
+    private String serviceName;
+
     private static final Set<String> INTERNAL_PATHS = Set.of(
             "/login", "/register", "/auth/refresh"
     );
@@ -42,7 +45,7 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
         }
 
         // Set MDC
-        MdcUtil.setMdc(requestId, SERVICE_NAME);
+        MdcUtil.setMdc(requestId, serviceName);
 
         log.info("{} {}",
                 request.getMethod(),
@@ -64,7 +67,7 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
         if (INTERNAL_PATHS.stream().anyMatch(path::contains)) {
             mutatedRequest = request.mutate()
                     .header("X-Internal-Call", "true")
-                    .header("X-Source-Service", SERVICE_NAME)
+                    .header("X-Source-Service", serviceName)
                     .header(MdcUtil.REQUEST_ID_HEADER, requestId)
                     .build();
         } else {
@@ -80,7 +83,7 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
             mutatedRequest = request.mutate()
                     .header(HttpHeaders.AUTHORIZATION, authHeader)
                     .header("X-Internal-Call", "true")
-                    .header("X-Source-Service", SERVICE_NAME)
+                    .header("X-Source-Service", serviceName)
                     .header(MdcUtil.REQUEST_ID_HEADER, requestId)
                     .build();
         }
@@ -97,7 +100,7 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
                     if (signal.isOnNext() || signal.isOnComplete() || signal.isOnError()) {
                         MdcUtil.restoreMdc(Context.of(
                                 MdcUtil.REQUEST_ID_KEY, finalRequestId,
-                                MdcUtil.SERVICE_NAME_KEY, SERVICE_NAME
+                                MdcUtil.SERVICE_NAME_KEY, serviceName
                         ));
                     }
                 })

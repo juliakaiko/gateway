@@ -14,11 +14,6 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ServerWebExchange;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
@@ -59,23 +54,8 @@ public class GlobalAdvice {
     public ResponseEntity<ErrorItem> handleWebExchangeBindException(
             WebExchangeBindException e,
             ServerWebExchange exchange) {
-
-        ErrorItem error = new ErrorItem();
-
-        Map<String, String> fieldErrors = e.getFieldErrors().stream()
-                .collect(Collectors.toMap(
-                        x -> x.getField(),
-                        x -> x.getDefaultMessage(),
-                        (msg1, msg2) -> msg1 + "; " + msg2
-                ));
-
-        error.setFieldErrors(fieldErrors);
-        error.setMessage("Validation failed");
-        error.setTimestamp(formatDate());
-        error.setUrl(exchange.getRequest().getURI().toString());
-        error.setStatusCode(HttpStatus.BAD_REQUEST.value());
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        ErrorItem error = ErrorItem.hanleValidationException(e, exchange, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(error.getStatusCode()).body(error);
     }
 
     /**
@@ -87,27 +67,12 @@ public class GlobalAdvice {
      * @param exchange request context
      * @return ResponseEntity with {@link ErrorItem} containing error details and HTTP status
      */
-
     @ExceptionHandler(WebClientResponseException.class)
     public ResponseEntity<ErrorItem> handleWebClientResponseException(
             WebClientResponseException e, ServerWebExchange exchange) {
-
-        try {
-            ErrorItem error = objectMapper.readValue(
-                    e.getResponseBodyAsString(),
-                    ErrorItem.class
-            );
-            return new ResponseEntity<>(error, HttpStatus.valueOf(e.getRawStatusCode()));
-        } catch (Exception ex) {
-            ErrorItem error = new ErrorItem();
-            error.setMessage("Server error");
-            error.setTimestamp(formatDate());
-            error.setUrl(exchange.getRequest().getURI().toString());
-            error.setStatusCode(HttpStatus.BAD_REQUEST.value());
-            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-        }
+        ErrorItem error = ErrorItem.handleDownstreamResponseException(e, exchange);
+        return ResponseEntity.status(error.getStatusCode()).body(error);
     }
-
 
     /**
      * Handles authorization denied exceptions when a user lacks required permissions.
@@ -119,7 +84,7 @@ public class GlobalAdvice {
     public ResponseEntity<ErrorItem> handleAuthorizationDeniedException(
             AuthorizationDeniedException e,
             ServerWebExchange exchange) {
-        ErrorItem error = generateMessage(e, HttpStatus.FORBIDDEN, exchange);
+        ErrorItem error = ErrorItem.generateMessage(e, HttpStatus.FORBIDDEN, exchange);
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
@@ -127,7 +92,7 @@ public class GlobalAdvice {
     public ResponseEntity<ErrorItem> handleAuthServiceException(
             AuthServiceException e,
             ServerWebExchange exchange) {
-        ErrorItem error = generateMessage(e, HttpStatus.BAD_REQUEST, exchange);
+        ErrorItem error = ErrorItem.generateMessage(e, HttpStatus.BAD_REQUEST, exchange);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -135,34 +100,7 @@ public class GlobalAdvice {
     public ResponseEntity<ErrorItem> handleIllegalArgumentException(
             IllegalArgumentException e,
             ServerWebExchange exchange) {
-        ErrorItem error = generateMessage(e, HttpStatus.BAD_REQUEST, exchange);
+        ErrorItem error = ErrorItem.generateMessage(e, HttpStatus.BAD_REQUEST, exchange);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
-
-    /**
-     * Generates an ErrorItem object with error message, URL, status code and timestamp.
-     *
-     * @param e Exception
-     * @param status HTTP status
-     * @return ErrorItem with populated fields
-     */
-    public ErrorItem generateMessage(Exception e, HttpStatus status, ServerWebExchange exchange) {
-        ErrorItem error = new ErrorItem();
-        error.setTimestamp(formatDate());
-        error.setMessage(e.getMessage());
-        error.setUrl(exchange.getRequest().getURI().toString());
-        error.setStatusCode(status.value());
-        return error;
-    }
-
-    /**
-     * Formats the current date and time into a string with pattern "yyyy-MM-dd HH:mm".
-     *
-     * @return formatted date-time string
-     */
-    public String formatDate() {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        return dateTimeFormatter.format(LocalDateTime.now());
-    }
-
 }
