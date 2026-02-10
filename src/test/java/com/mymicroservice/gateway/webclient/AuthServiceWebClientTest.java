@@ -51,7 +51,6 @@ class AuthServiceWebClientTest {
 
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri("/auth/register")).thenReturn(requestBodySpec);
-        when(requestBodySpec.headers(any())).thenReturn(requestBodySpec);
         when(requestBodySpec.bodyValue(user)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(AccessAndRefreshTokenResponse.class))
@@ -70,7 +69,6 @@ class AuthServiceWebClientTest {
         when(webClient.delete()).thenReturn(deleteRequestHeadersUriSpec);
         when(deleteRequestHeadersUriSpec.uri("/api/internal/auth/user/{id}", userId))
                 .thenReturn(deleteRequestHeadersSpec);
-        when(deleteRequestHeadersSpec.headers(any())).thenReturn(deleteRequestHeadersSpec);
         when(deleteRequestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.toBodilessEntity()).thenReturn(Mono.just(ResponseEntity.noContent().build()));
 

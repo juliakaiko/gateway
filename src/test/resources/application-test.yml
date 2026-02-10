@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: gateway
   cloud:
     config:
       enabled: false
@@ -12,3 +14,38 @@ services:
     url: http://dummy
   orderservice:
     url: http://dummy
+  paymentservice:
+    url: http://dummy
+
+cors:
+  allowed-origin-patterns:
+    - "http://innowise-project.local"
+    - "https://innowise-project.local"
+    - "http://localhost:3000"
+    - "http://127.0.0.1:[*]"
+    - "http://frontend"
+    - "http://gateway:8080"
+
+  allowed-methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    - "PATCH"
+
+  allowed-headers:
+    - "Authorization"
+    - "Content-Type"
+    - "X-Requested-With"
+    - "Accept"
+    - "Origin"
+    - "Access-Control-Request-Method"
+    - "Access-Control-Request-Headers"
+
+  exposed-headers:
+    - "Authorization"
+    - "Content-Type"
+
+  max-age: 3600
+  allow-credentials: true

@@ -51,7 +51,6 @@ public class UserServiceWebClientTest {
         // POST-mock
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri("/api/internal/users/")).thenReturn(requestBodySpec);
-        when(requestBodySpec.headers(any())).thenReturn(requestBodySpec);
         when(requestBodySpec.bodyValue(userRequest)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(UserFromUserServiceResponse.class)).thenReturn(Mono.just(userResponse));
@@ -69,7 +68,6 @@ public class UserServiceWebClientTest {
         // DELETE-mock
         when(webClient.delete()).thenReturn(deleteRequestHeadersUriSpec);
         when(deleteRequestHeadersUriSpec.uri("/api/internal/users/{id}", userId)).thenReturn(deleteRequestHeadersSpec);
-        when(deleteRequestHeadersSpec.headers(any())).thenReturn(deleteRequestHeadersSpec);
         when(deleteRequestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(UserFromUserServiceResponse.class)).thenReturn(Mono.just(userResponse));
 
