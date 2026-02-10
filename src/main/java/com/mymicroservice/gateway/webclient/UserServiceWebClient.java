@@ -19,10 +19,6 @@ public class UserServiceWebClient {
     public Mono<UserFromUserServiceResponse> createUser(UserRegistrationResponse userResponse) {
         return webClient.post()
                 .uri("/api/internal/users/")
-                .headers(headers -> {
-                    headers.set("X-Internal-Call", "true");
-                    headers.set("X-Source-Service", "GATEWAY");
-                })
                 .bodyValue(userResponse)
                 .retrieve()
                 .bodyToMono(UserFromUserServiceResponse.class);
@@ -31,10 +27,6 @@ public class UserServiceWebClient {
     public Mono<UserFromUserServiceResponse> deleteUser(Long id) {
         return webClient.delete()
                 .uri("/api/internal/users/{id}", id)
-                .headers(headers -> {
-                    headers.set("X-Internal-Call", "true");
-                    headers.set("X-Source-Service", "GATEWAY");
-                })
                 .retrieve()
                 .bodyToMono(UserFromUserServiceResponse.class);
     }

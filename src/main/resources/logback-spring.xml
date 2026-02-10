@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="LOG_PATH" value="${user.dir}/logs"/>
+
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="unknown-service"/>
+
+    <!-- Консольный лог -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Файловый JSON-лог с кастомной структурой -->
+    <appender name="TRACE_MDC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Текущий активный файл -->
+        <file>${LOG_PATH}/${SERVICE_NAME}.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Архивные файлы -->
+            <fileNamePattern>${LOG_PATH}/${SERVICE_NAME}_%d{dd-MM-yyyy}.log</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <!-- MDC поля -->
+                <mdc>
+                    <!-- Если указать keys, пишем их через <includeMdcKeyName> -->
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>serviceName</includeMdcKeyName>
+                    <includeMdcKeyName>path</includeMdcKeyName>
+                    <includeMdcKeyName>query</includeMdcKeyName>
+                </mdc>
+                <threadName />
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Логгер для трассировки -->
+    <!-- В файл trace-mdc.log  добавлятся только MDC логи / additivity="true" — логи также пойдут в корневой логгер (в консоль)-->
+    <logger name="com.mymicroservice" level="INFO" additivity="true">
+        <appender-ref ref="TRACE_MDC"/>
+    </logger>
+    <!--<logger name="TRACE_MDC_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="TRACE_MDC"/>
+    </logger>-->
+
+    <!-- Корневой логгер -->
+    <root level="INFO">
+        <!-- Сохраняем вывод в консоль -->
+        <appender-ref ref="CONSOLE"/>
+
+        <!-- ВСЕ логи уровня INFO добавятся в trace-mdc.log: попадёт всё, включая логи Spring Boot, Hibernate и т.д. -->
+        <!--<appender-ref ref="TRACE_MDC"/>-->
+    </root>
+
+</configuration>
+

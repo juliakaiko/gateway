@@ -64,12 +64,18 @@ services:
     url: http://localhost:8082
   userservice:
     url: http://localhost:8083
+  paymentservice:
+    url: http://localhost:8084
 
 logging:
   level:
-    org.springframework.boot.web.embedded.netty: DEBUG
-    org.springframework.cloud.gateway: DEBUG
-    com.mymicroservice: INFO
+    com.mymicroservice.gateway: INFO
+    org.springframework: INFO
+    org.springframework.cloud.gateway: WARN
+    org.springframework.security: WARN
+    reactor.netty: ERROR
+    org.springframework.boot.web.embedded.netty: ERROR
+    org.hibernate: WARN
 
 management:
   endpoints:
@@ -95,3 +101,35 @@ springdoc:
         name: User Service
       - url: http://localhost:8084/v3/api-docs
         name: Payment Service
+cors:
+  allowed-origin-patterns:
+    - "http://innowise-project.local"
+    - "https://innowise-project.local"
+    - "http://localhost:3000"
+    - "http://127.0.0.1:[*]"
+    - "http://frontend"
+    - "http://gateway:8080"
+
+  allowed-methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    - "PATCH"
+
+  allowed-headers:
+    - "Authorization"
+    - "Content-Type"
+    - "X-Requested-With"
+    - "Accept"
+    - "Origin"
+    - "Access-Control-Request-Method"
+    - "Access-Control-Request-Headers"
+
+  exposed-headers:
+    - "Authorization"
+    - "Content-Type"
+
+  max-age: 3600
+  allow-credentials: true

@@ -1,5 +1,6 @@
 package com.mymicroservice.gateway.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mymicroservice.gateway.advice.GlobalAdvice;
 import com.mymicroservice.gateway.dto.request.UserRegistrationRequest;
 import com.mymicroservice.gateway.dto.response.RegistrationResponse;
@@ -37,6 +38,9 @@ class RegistrationControllerTest {
     @Mock
     private ResponseUtil responseUtil;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     private WebTestClient webTestClient;
 
     private UserRegistrationRequest request;
@@ -56,7 +60,7 @@ class RegistrationControllerTest {
         );
         webTestClient = WebTestClient.bindToController(controller).build();
 
-        GlobalAdvice globalAdvice = new GlobalAdvice();
+        GlobalAdvice globalAdvice = new GlobalAdvice(objectMapper);
         webTestClient = WebTestClient.bindToController(controller)
                 .controllerAdvice(globalAdvice)
                 .build();

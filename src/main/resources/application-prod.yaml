@@ -10,6 +10,7 @@ spring:
           predicates:
             - Path=/auth/**
           filters:
+            - StripPrefix=0  # не удалять /auth из пути
             - name: CircuitBreaker
               args:
                 name: authServiceCircuitBreaker
@@ -20,6 +21,7 @@ spring:
           predicates:
             - Path=/api/users/**,/api/cards/**
           filters:
+            - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
@@ -30,6 +32,7 @@ spring:
           predicates:
             - Path=/api/items/**,/api/orders/**,/api/order-items/**
           filters:
+            - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
@@ -40,6 +43,7 @@ spring:
           predicates:
             - Path=/api/payments/**
           filters:
+            - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: paymentServiceCircuitBreaker
@@ -51,6 +55,7 @@ spring:
 
 server:
   port: 8080
+  address: 0.0.0.0  # 🔹 for Kubernetes: so that the Pod is accessible from the cluster, and not just within itself
 
 # For WebClient
 services:
@@ -60,12 +65,18 @@ services:
     url: http://orderservice:8082
   userservice:
     url: http://userservice:8083
+  paymentservice:
+    url: http://paymentservice:8084
 
 logging:
   level:
-    org.springframework.boot.web.embedded.netty: DEBUG
-    org.springframework.cloud.gateway: DEBUG
-    com.mymicroservice: INFO
+    com.mymicroservice.gateway: INFO
+    org.springframework: INFO
+    org.springframework.cloud.gateway: WARN
+    org.springframework.security: WARN
+    reactor.netty: ERROR
+    org.springframework.boot.web.embedded.netty: ERROR
+    org.hibernate: WARN
 
 management:
   endpoints:
@@ -92,3 +103,35 @@ springdoc:
       - url: http://localhost:8084/v3/api-docs
         name: Payment Service
 
+cors:
+  allowed-origin-patterns:
+    - "http://innowise-project.local"
+    - "https://innowise-project.local"
+    - "http://localhost:3000"
+    - "http://127.0.0.1:[*]"
+    - "http://frontend"
+    - "http://gateway:8080"
+
+  allowed-methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    - "PATCH"
+
+  allowed-headers:
+    - "Authorization"
+    - "Content-Type"
+    - "X-Requested-With"
+    - "Accept"
+    - "Origin"
+    - "Access-Control-Request-Method"
+    - "Access-Control-Request-Headers"
+
+  exposed-headers:
+    - "Authorization"
+    - "Content-Type"
+
+  max-age: 3600
+  allow-credentials: true

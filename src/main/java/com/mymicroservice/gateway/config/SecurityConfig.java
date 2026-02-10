@@ -5,6 +5,7 @@ import com.mymicroservice.gateway.security.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
@@ -25,8 +26,11 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(HttpMethod.OPTIONS, "/api/**").permitAll() //for frontend
                         .pathMatchers(
-                                "/actuator/health/**",
+                                "/actuator/**",
+                                "/actuator",
+                                "/actuators/health",
                                 "/register",
                                 "/auth/**",
                                 "/swagger-ui/**",
