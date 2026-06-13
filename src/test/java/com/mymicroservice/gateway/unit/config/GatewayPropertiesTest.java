@@ -12,7 +12,28 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class GatewayPropertiesTest {
 
     @Test
-    void gatewayCustomProperties_ShouldStorePaths_WhenSet() {
+    void gatewayCustomProperties_ShouldSupportEqualsHashCodeAndToString() {
+        GatewayCustomProperties first = createGatewayProperties();
+        GatewayCustomProperties second = createGatewayProperties();
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+        assertNotNull(first.toString());
+        assertNotNull(first.getPublicPaths().toString());
+        assertNotNull(first.getInternalPaths().toString());
+    }
+
+    @Test
+    void corsProperties_ShouldSupportEqualsHashCodeAndToString() {
+        CorsProperties first = createFullCorsProperties();
+        CorsProperties second = createFullCorsProperties();
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+        assertNotNull(first.toString());
+    }
+
+    private GatewayCustomProperties createGatewayProperties() {
         GatewayCustomProperties properties = new GatewayCustomProperties();
         GatewayCustomProperties.Public publicPaths = new GatewayCustomProperties.Public();
         publicPaths.setPaths(List.of("/actuator"));
@@ -20,13 +41,10 @@ class GatewayPropertiesTest {
         internalPaths.setPaths(List.of("/register"));
         properties.setPublicPaths(publicPaths);
         properties.setInternalPaths(internalPaths);
-
-        assertEquals("/actuator", properties.getPublicPaths().getPaths().getFirst());
-        assertEquals("/register", properties.getInternalPaths().getPaths().getFirst());
+        return properties;
     }
 
-    @Test
-    void corsProperties_ShouldStoreCorsSettings_WhenSet() {
+    private CorsProperties createFullCorsProperties() {
         CorsProperties properties = new CorsProperties();
         properties.setAllowedOriginPatterns(List.of("http://localhost:3000"));
         properties.setAllowedMethods(List.of("GET"));
@@ -34,6 +52,20 @@ class GatewayPropertiesTest {
         properties.setExposedHeaders(List.of("Content-Type"));
         properties.setMaxAge(3600L);
         properties.setAllowCredentials(true);
+        return properties;
+    }
+
+    @Test
+    void gatewayCustomProperties_ShouldStorePaths_WhenSet() {
+        GatewayCustomProperties properties = createGatewayProperties();
+
+        assertEquals("/actuator", properties.getPublicPaths().getPaths().getFirst());
+        assertEquals("/register", properties.getInternalPaths().getPaths().getFirst());
+    }
+
+    @Test
+    void corsProperties_ShouldStoreCorsSettings_WhenSet() {
+        CorsProperties properties = createFullCorsProperties();
 
         assertNotNull(properties.getAllowedOriginPatterns());
         assertEquals(3600L, properties.getMaxAge());

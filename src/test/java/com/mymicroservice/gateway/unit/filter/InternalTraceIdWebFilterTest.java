@@ -84,6 +84,23 @@ class InternalTraceIdWebFilterTest {
     }
 
     @Test
+    void filter_ShouldGenerateTraceId_WhenHeaderIsBlank() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/register")
+                        .header(MdcUtil.TRACE_ID_HEADER, "   ")
+                        .build()
+        );
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain))
+                .verifyComplete();
+
+        String responseTraceId = exchange.getResponse().getHeaders().getFirst(MdcUtil.TRACE_ID_HEADER);
+        assertNotNull(responseTraceId);
+        assertNotEquals("", responseTraceId);
+    }
+
+    @Test
     void filter_ShouldClearMdc_WhenRequestCompletes() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/register")

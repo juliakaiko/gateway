@@ -114,6 +114,24 @@ class GlobalAdviceTest {
     }
 
     @Test
+    void handleWebClientResponseException_ShouldReturnGenericError_WhenBodyIsUnparseable() {
+        WebClientResponseException exception = WebClientResponseException.create(
+                500,
+                "Internal Server Error",
+                HttpHeaders.EMPTY,
+                "not-json".getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
+
+        ResponseEntity<ErrorItem> response = globalAdvice.handleWebClientResponseException(exception, exchange);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Server error", response.getBody().getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getBody().getStatusCode());
+    }
+
+    @Test
     void handleIllegalArgumentException_ShouldReturnBadRequest_WhenArgumentIsInvalid() {
         IllegalArgumentException exception = new IllegalArgumentException("Unknown or unsupported role: SUPERADMIN");
 

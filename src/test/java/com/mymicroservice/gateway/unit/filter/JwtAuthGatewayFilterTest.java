@@ -180,6 +180,70 @@ class JwtAuthGatewayFilterTest {
     }
 
     @Test
+    void filter_ShouldTreatNestedInternalPathAsInternal_WhenPathHasSubresource() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/login/oauth").build()
+        );
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain))
+                .verifyComplete();
+
+        ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
+        verify(chain).filter(captor.capture());
+        assertEquals("true", captor.getValue().getRequest().getHeaders().getFirst("X-Internal-Call"));
+    }
+
+    @Test
+    void filter_ShouldForwardWithoutInternalHeaders_WhenAuthorizationHeaderIsInvalid() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/profile")
+                        .header(HttpHeaders.AUTHORIZATION, "Basic invalid")
+                        .build()
+        );
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain))
+                .verifyComplete();
+
+        ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
+        verify(chain).filter(captor.capture());
+        assertNull(captor.getValue().getRequest().getHeaders().getFirst("X-Internal-Call"));
+    }
+
+    @Test
+    void filter_ShouldGenerateTraceId_WhenHeaderIsBlank() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/actuator/health")
+                        .header(MdcUtil.TRACE_ID_HEADER, "   ")
+                        .build()
+        );
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain))
+                .verifyComplete();
+
+        String traceId = exchange.getResponse().getHeaders().getFirst(MdcUtil.TRACE_ID_HEADER);
+        assertNotNull(traceId);
+    }
+
+    @Test
+    void filter_ShouldUseEmptyPublicPaths_WhenPublicPathsAreNull() {
+        gatewayCustomProperties.setPublicPaths(null);
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/profile")
+                        .header(HttpHeaders.AUTHORIZATION, TestConstants.BEARER_PREFIX + TestConstants.TEST_JWT)
+                        .build()
+        );
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain))
+                .verifyComplete();
+
+        verify(chain).filter(any());
+    }
+
+    @Test
     void getOrder_ShouldReturnHighestPrecedence_WhenCalled() {
         assertEquals(Integer.MIN_VALUE, filter.getOrder());
     }
