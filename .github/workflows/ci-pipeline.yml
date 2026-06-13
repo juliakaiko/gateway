@@ -32,22 +32,32 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 5. Build and test with Maven
+      # 5. Build, test and generate JaCoCo report (report is bound to verify phase)
       - name: Build and test with Maven
         run: |
-          mvn clean package -DskipTests
+          mvn -B clean verify
 
       # 6. SonarCloud Scan
+      - name: Check JaCoCo
+        run: |
+          ls -R target/site/jacoco
+          cat target/site/jacoco/jacoco.xml | head -20
+
       - name: SonarCloud Scan
+        run: |
+          mvn -B sonar:sonar \
+            -Dsonar.projectKey=juliakaiko_gateway \
+            -Dsonar.projectName=gateway \
+            -Dsonar.organization=juliakaiko \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -Dsonar.java.binaries=target/classes,target/generated-sources/annotations \
+            -Dsonar.java.test.binaries=target/test-classes \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.sourceEncoding=UTF-8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn sonar:sonar \
-            -Dsonar.projectKey=juliakaiko_gateway \
-            -Dsonar.organization=juliakaiko \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN \
-            -DskipTests
+          SONAR_HOST_URL: https://sonarcloud.io
 
       # 7. Docker Build and Push
       - name: Docker Build and Push

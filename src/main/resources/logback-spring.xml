@@ -29,7 +29,7 @@
                 <!-- MDC поля -->
                 <mdc>
                     <!-- Если указать keys, пишем их через <includeMdcKeyName> -->
-                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>traceId</includeMdcKeyName>
                     <includeMdcKeyName>serviceName</includeMdcKeyName>
                     <includeMdcKeyName>path</includeMdcKeyName>
                     <includeMdcKeyName>query</includeMdcKeyName>
@@ -41,7 +41,7 @@
     </appender>
 
     <!-- Логгер для трассировки -->
-    <!-- В файл trace-mdc.log  добавлятся только MDC логи / additivity="true" — логи также пойдут в корневой логгер (в консоль)-->
+    <!-- В файл service.log  добавлятся только MDC логи / additivity="true" — логи также пойдут в корневой логгер (в консоль)-->
     <logger name="com.mymicroservice" level="INFO" additivity="true">
         <appender-ref ref="TRACE_MDC"/>
     </logger>

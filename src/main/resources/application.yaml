@@ -1,21 +1,44 @@
 spring:
   application:
     name: gateway
-  cloud:
-    config:
-      enabled: false
-      import-check:
-        enabled: false
 
-services:
-  userservice:
-    url: http://dummy
-  authservice:
-    url: http://dummy
-  orderservice:
-    url: http://dummy
-  paymentservice:
-    url: http://dummy
+server:
+  port: 8080
+
+logging:
+  level:
+    com.mymicroservice.gateway: INFO
+    org.springframework: INFO
+    org.springframework.cloud.gateway: WARN
+    org.springframework.security: WARN
+    reactor.netty: ERROR
+    org.springframework.boot.web.embedded.netty: ERROR
+    org.hibernate: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    urls:
+      - url: /api-docs
+        name: Gateway API
+      - url: /auth/v3/api-docs
+        name: Auth Service
+      - url: /api/users/v3/api-docs
+        name: User Service
+      - url: /api/items/v3/api-docs
+        name: Order Service
+      - url: /api/payments/v3/api-docs
+        name: Payment Service
 
 cors:
   allowed-origin-patterns:
@@ -25,7 +48,6 @@ cors:
     - "http://127.0.0.1:[*]"
     - "http://frontend"
     - "http://gateway:8080"
-
   allowed-methods:
     - "GET"
     - "POST"
@@ -33,7 +55,6 @@ cors:
     - "DELETE"
     - "OPTIONS"
     - "PATCH"
-
   allowed-headers:
     - "Authorization"
     - "Content-Type"
@@ -42,11 +63,9 @@ cors:
     - "Origin"
     - "Access-Control-Request-Method"
     - "Access-Control-Request-Headers"
-
   exposed-headers:
     - "Authorization"
     - "Content-Type"
-
   max-age: 3600
   allow-credentials: true
 

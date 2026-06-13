@@ -11,19 +11,19 @@ import java.util.UUID;
 @UtilityClass
 public class MdcUtil {
 
-    public static final String REQUEST_ID_KEY = "requestId";
+    public static final String TRACE_ID_KEY = "traceId";
     public static final String SERVICE_NAME_KEY = "serviceName";
-    public static final String REQUEST_ID_HEADER = "X-Request-Id";
+    public static final String TRACE_ID_HEADER = "X-Trace-Id";
 
     /**
      * Creates a Reactor context with MDC values
      */
     public static Context createReactorContext() {
-        String requestId = MDC.get(REQUEST_ID_KEY);
+        String requestId = MDC.get(TRACE_ID_KEY);
         String serviceName = MDC.get(SERVICE_NAME_KEY);
 
         return Context.of(
-                REQUEST_ID_KEY, Optional.ofNullable(requestId).orElse(UUID.randomUUID().toString()),
+                TRACE_ID_KEY, Optional.ofNullable(requestId).orElse(UUID.randomUUID().toString()),
                 SERVICE_NAME_KEY, Optional.ofNullable(serviceName).orElse("gateway")
         );
     }
@@ -32,10 +32,10 @@ public class MdcUtil {
      * Restores the MDC from the Reactor context
      */
     public static void restoreMdc(Context context) {
-        if (context.hasKey(REQUEST_ID_KEY)) {
-            String requestId = context.get(REQUEST_ID_KEY);
+        if (context.hasKey(TRACE_ID_KEY)) {
+            String requestId = context.get(TRACE_ID_KEY);
             if (!requestId.isEmpty()) {
-                MDC.put(REQUEST_ID_KEY, requestId);
+                MDC.put(TRACE_ID_KEY, requestId);
             }
         }
         if (context.hasKey(SERVICE_NAME_KEY)) {
@@ -51,7 +51,7 @@ public class MdcUtil {
      */
     public static void setMdc(String requestId, String serviceName) {
         if (requestId != null && !requestId.isEmpty()) {
-            MDC.put(REQUEST_ID_KEY, requestId);
+            MDC.put(TRACE_ID_KEY, requestId);
         }
         if (serviceName != null && !serviceName.isEmpty()) {
             MDC.put(SERVICE_NAME_KEY, serviceName);

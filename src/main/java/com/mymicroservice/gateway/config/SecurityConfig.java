@@ -22,22 +22,40 @@ import java.util.Base64;
 public class SecurityConfig {
 
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity http,
+            CustomAuthenticationEntryPoint authenticationEntryPoint,
+            CustomAccessDeniedHandler accessDeniedHandler) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/api/**").permitAll() //for frontend
                         .pathMatchers(
+                                // Actuator
                                 "/actuator/**",
                                 "/actuator",
                                 "/actuators/health",
+
+                                // Auth
                                 "/register",
                                 "/auth/**",
+
+                                // Swagger UI Gateway
+                                "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
+                                "/webjars/**",
+
+                                // API Docs Gateway
                                 "/api-docs",
                                 "/api-docs/**",
-                                "/webjars/**"
+                                "/v3/api-docs/**",
+
+                                //API's of downstream services
+                                "/auth/v3/api-docs",
+                                "/api/users/v3/api-docs",
+                                "/api/items/v3/api-docs",
+                                "/api/payments/v3/api-docs"
                         ).permitAll()
                         .anyExchange().authenticated()
                 )
@@ -45,8 +63,8 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt.jwtDecoder(reactiveJwtDecoder()))
                 )
                 .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-                        .accessDeniedHandler(new CustomAccessDeniedHandler())
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .build();
     }

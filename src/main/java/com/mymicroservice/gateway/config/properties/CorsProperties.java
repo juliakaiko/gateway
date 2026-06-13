@@ -1,4 +1,4 @@
-package com.mymicroservice.gateway.config;
+package com.mymicroservice.gateway.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
