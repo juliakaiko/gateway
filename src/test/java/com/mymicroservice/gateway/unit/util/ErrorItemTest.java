@@ -60,6 +60,38 @@ class ErrorItemTest {
     }
 
     @Test
+    void hanleValidationException_ShouldMergeDuplicateFieldErrors_WhenSameFieldFailsTwice() throws Exception {
+        UserRegistrationRequest request = new UserRegistrationRequest();
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(request, "request");
+        bindingResult.addError(new FieldError("request", "email", "First error"));
+        bindingResult.addError(new FieldError("request", "email", "Second error"));
+
+        MethodParameter parameter = new MethodParameter(
+                RegistrationController.class.getMethod("register", UserRegistrationRequest.class),
+                0
+        );
+        WebExchangeBindException exception = new WebExchangeBindException(parameter, bindingResult);
+
+        ErrorItem error = ErrorItem.hanleValidationException(exception, exchange, HttpStatus.BAD_REQUEST);
+
+        assertEquals("First error; Second error", error.getFieldErrors().get("email"));
+    }
+
+    @Test
+    void errorItem_ShouldExposeAllFields_WhenSettersAreUsed() {
+        ErrorItem error = new ErrorItem();
+        error.setMessage("Test message");
+        error.setTimestamp("2025-01-01 12:00");
+        error.setUrl("/register");
+        error.setStatusCode(400);
+
+        assertEquals("Test message", error.getMessage());
+        assertEquals("2025-01-01 12:00", error.getTimestamp());
+        assertEquals("/register", error.getUrl());
+        assertEquals(400, error.getStatusCode());
+    }
+
+    @Test
     void generateMessage_ShouldReturnErrorItemWithMessage_WhenExceptionProvided() {
         Exception exception = new RuntimeException(TestConstants.AUTH_ERROR_MESSAGE);
 
