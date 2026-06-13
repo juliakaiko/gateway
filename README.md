@@ -208,7 +208,9 @@ src/test/java/com/mymicroservice/gateway/
 Примеры:
 - `register_ShouldReturnOk_WhenBothServicesSucceed`
 - `filter_ShouldForwardRequest_WhenJwtIsMissing`
-- `filter_ShouldNotTreatPathAsInternal_WhenPathOnlyContainsLoginSubstring`
+- `reactiveJwtDecoder_ShouldThrowRuntimeException_WhenPublicKeyLoadingFails`
+- `mdcContextFilter_ShouldAddTraceAndInternalHeaders_WhenContextContainsValues`
+- `applyCorsHeaders_ShouldSetAllowedOriginAndCredentials_WhenOriginIsAllowed`
 - `getPublicPaths_ShouldContainExpectedPaths_WhenTestProfileIsActive`
 
 ---
@@ -218,7 +220,7 @@ src/test/java/com/mymicroservice/gateway/
 ```
 gateway/
 ├── src/main/java/.../gateway/
-│   ├── config/           # Security, CORS, WebClient, OpenAPI
+│   ├── config/           # SecurityConfig, WebClientConfig, properties, OpenAPI
 │   ├── filter/           # JwtAuthGatewayFilter, InternalTraceIdWebFilter
 │   ├── security/         # CustomAuthenticationEntryPoint, CustomAccessDeniedHandler
 │   ├── controller/       # Registration, UserDeletion, Fallback, Actuator

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mymicroservice.gateway.config.JacksonConfig;
 import com.mymicroservice.gateway.config.OpenApiConfig;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -26,5 +28,11 @@ class ConfigUnitTest {
 
         assertNotNull(openAPI.getInfo());
         assertNotNull(openAPI.getComponents().getSecuritySchemes().get("Bearer Authentication"));
+        assertEquals("Gateway API", openAPI.getInfo().getTitle());
+        assertEquals("http://localhost:8080", openAPI.getServers().getFirst().getUrl());
+        SecurityScheme scheme = openAPI.getComponents().getSecuritySchemes().get("Bearer Authentication");
+        assertEquals(SecurityScheme.Type.HTTP, scheme.getType());
+        assertEquals("bearer", scheme.getScheme());
+        assertEquals("JWT", scheme.getBearerFormat());
     }
 }

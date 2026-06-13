@@ -88,4 +88,50 @@ class MdcUtilTest {
                 .verifyComplete();
     }
 
+    @Test
+    void setMdc_ShouldIgnoreNullAndBlankValues_WhenValuesAreEmpty() {
+        MdcUtil.setMdc(null, null);
+        MdcUtil.setMdc("", "");
+
+        assertNull(MDC.get(MdcUtil.TRACE_ID_KEY));
+        assertNull(MDC.get(MdcUtil.SERVICE_NAME_KEY));
+    }
+
+    @Test
+    void restoreMdc_ShouldIgnoreBlankValues_WhenContextContainsEmptyStrings() {
+        Context context = Context.of(
+                MdcUtil.TRACE_ID_KEY, "",
+                MdcUtil.SERVICE_NAME_KEY, ""
+        );
+
+        MdcUtil.restoreMdc(context);
+
+        assertNull(MDC.get(MdcUtil.TRACE_ID_KEY));
+        assertNull(MDC.get(MdcUtil.SERVICE_NAME_KEY));
+    }
+
+    @Test
+    void restoreMdc_ShouldDoNothing_WhenContextDoesNotContainKeys() {
+        MdcUtil.restoreMdc(Context.empty());
+
+        assertNull(MDC.get(MdcUtil.TRACE_ID_KEY));
+        assertNull(MDC.get(MdcUtil.SERVICE_NAME_KEY));
+    }
+
+    @Test
+    void withMdc_ShouldRestoreMdcOnError_WhenMonoFails() {
+        Mono<String> failingMono = Mono.deferContextual(contextView -> {
+            MdcUtil.restoreMdc(Context.of(contextView));
+            return Mono.error(new IllegalStateException("failed"));
+        });
+
+        StepVerifier.create(MdcUtil.withMdc(failingMono)
+                        .contextWrite(Context.of(
+                                MdcUtil.TRACE_ID_KEY, TestConstants.TRACE_ID,
+                                MdcUtil.SERVICE_NAME_KEY, TestConstants.SERVICE_NAME
+                        )))
+                .expectError(IllegalStateException.class)
+                .verify();
+    }
+
 }

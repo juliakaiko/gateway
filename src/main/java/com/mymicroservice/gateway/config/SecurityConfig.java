@@ -117,7 +117,7 @@ public class SecurityConfig {
         }
     }
 
-    private RSAPublicKey getPublicKey() throws Exception {
+    protected RSAPublicKey getPublicKey() throws Exception {
         ClassPathResource resource = new ClassPathResource("keys/public.pem");
         String key = new String(resource.getInputStream().readAllBytes())
                 .replace("-----BEGIN PUBLIC KEY-----", "")

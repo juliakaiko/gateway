@@ -18,6 +18,7 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SecurityHandlersTest {
@@ -71,6 +72,32 @@ class SecurityHandlersTest {
         String body = exchange.getResponse().getBodyAsString().block();
         assertTrue(body.contains("\"status\": 403"));
         assertTrue(body.contains("\"message\": \"Access denied\""));
+    }
+
+    @Test
+    void commence_ShouldReturnUnauthorizedJsonWithoutCorsOrigin_WhenOriginHeaderIsMissing() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/profile").build()
+        );
+
+        StepVerifier.create(authenticationEntryPoint.commence(exchange, new BadCredentialsException("Invalid token")))
+                .verifyComplete();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+        assertNull(exchange.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+    }
+
+    @Test
+    void handle_ShouldReturnForbiddenJsonWithoutCorsOrigin_WhenOriginHeaderIsMissing() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/admin").build()
+        );
+
+        StepVerifier.create(accessDeniedHandler.handle(exchange, new AccessDeniedException("Forbidden")))
+                .verifyComplete();
+
+        assertEquals(HttpStatus.FORBIDDEN, exchange.getResponse().getStatusCode());
+        assertNull(exchange.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
     private CorsProperties createCorsProperties() {
