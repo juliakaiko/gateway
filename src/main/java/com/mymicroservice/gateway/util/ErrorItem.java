@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -26,8 +25,6 @@ public class ErrorItem {
     private int statusCode;
 
     private Map<String, String> fieldErrors;
-
-    private static ObjectMapper objectMapper;
 
     public static ErrorItem hanleValidationException(WebExchangeBindException e,
                                                        ServerWebExchange exchange,
@@ -51,7 +48,8 @@ public class ErrorItem {
     }
 
     public static ErrorItem handleDownstreamResponseException(WebClientResponseException e,
-                                                       ServerWebExchange exchange) {
+                                                       ServerWebExchange exchange,
+                                                       ObjectMapper objectMapper) {
         ErrorItem error = new ErrorItem();
 
         try {

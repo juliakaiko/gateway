@@ -1,24 +1,24 @@
-package com.mymicroservice.gateway.webclient;
+package com.mymicroservice.gateway.unit.webclient;
 
 import com.mymicroservice.gateway.dto.response.UserFromUserServiceResponse;
 import com.mymicroservice.gateway.dto.response.UserRegistrationResponse;
 import com.mymicroservice.gateway.util.UserFromUserServiceResponseGenerator;
 import com.mymicroservice.gateway.util.UserRegistrationResponseGenerator;
+import com.mymicroservice.gateway.util.data.TestConstants;
+import com.mymicroservice.gateway.webclient.UserServiceWebClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceWebClientTest {
+class UserServiceWebClientTest {
 
     @Mock
     private WebClient webClient;
@@ -40,17 +40,17 @@ public class UserServiceWebClientTest {
 
     @Mock
     private WebClient.ResponseSpec responseSpec;
+
     @InjectMocks
     private UserServiceWebClient userServiceWebClient;
 
     @Test
-    void createUser_shouldReturnMonoUserFromUserServiceResponse() {
+    void createUser_ShouldReturnUserResponse_WhenUserServiceResponds() {
         UserRegistrationResponse userRequest = UserRegistrationResponseGenerator.generateUser();
         UserFromUserServiceResponse userResponse = UserFromUserServiceResponseGenerator.generateUser();
 
-        // POST-mock
         when(webClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri("/api/internal/users/")).thenReturn(requestBodySpec);
+        when(requestBodyUriSpec.uri(TestConstants.USER_CREATE_URI)).thenReturn(requestBodySpec);
         when(requestBodySpec.bodyValue(userRequest)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(UserFromUserServiceResponse.class)).thenReturn(Mono.just(userResponse));
@@ -61,17 +61,16 @@ public class UserServiceWebClientTest {
     }
 
     @Test
-    void deleteUser_shouldReturnMonoUserFromUserServiceResponse() {
-        Long userId = 123L;
-        UserFromUserServiceResponse userResponse = new UserFromUserServiceResponse();
+    void deleteUser_ShouldReturnUserResponse_WhenUserServiceDeletesUser() {
+        UserFromUserServiceResponse userResponse = UserFromUserServiceResponseGenerator.generateUser();
 
-        // DELETE-mock
         when(webClient.delete()).thenReturn(deleteRequestHeadersUriSpec);
-        when(deleteRequestHeadersUriSpec.uri("/api/internal/users/{id}", userId)).thenReturn(deleteRequestHeadersSpec);
+        when(deleteRequestHeadersUriSpec.uri(TestConstants.USER_DELETE_URI, TestConstants.WEBCLIENT_USER_ID))
+                .thenReturn(deleteRequestHeadersSpec);
         when(deleteRequestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(UserFromUserServiceResponse.class)).thenReturn(Mono.just(userResponse));
 
-        StepVerifier.create(userServiceWebClient.deleteUser(userId))
+        StepVerifier.create(userServiceWebClient.deleteUser(TestConstants.WEBCLIENT_USER_ID))
                 .expectNext(userResponse)
                 .verifyComplete();
     }

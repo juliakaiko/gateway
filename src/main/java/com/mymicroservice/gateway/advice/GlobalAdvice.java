@@ -70,7 +70,7 @@ public class GlobalAdvice {
     @ExceptionHandler(WebClientResponseException.class)
     public ResponseEntity<ErrorItem> handleWebClientResponseException(
             WebClientResponseException e, ServerWebExchange exchange) {
-        ErrorItem error = ErrorItem.handleDownstreamResponseException(e, exchange);
+        ErrorItem error = ErrorItem.handleDownstreamResponseException(e, exchange, objectMapper);
         return ResponseEntity.status(error.getStatusCode()).body(error);
     }
 

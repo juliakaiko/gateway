@@ -1,9 +1,11 @@
-package com.mymicroservice.gateway.webclient;
+package com.mymicroservice.gateway.unit.webclient;
 
 import com.mymicroservice.gateway.dto.response.AccessAndRefreshTokenResponse;
 import com.mymicroservice.gateway.dto.response.UserRegistrationResponse;
 import com.mymicroservice.gateway.util.AccessAndRefreshTokenResponseGenerator;
 import com.mymicroservice.gateway.util.UserRegistrationResponseGenerator;
+import com.mymicroservice.gateway.util.data.TestConstants;
+import com.mymicroservice.gateway.webclient.AuthServiceWebClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,7 +16,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,12 +46,12 @@ class AuthServiceWebClientTest {
     private AuthServiceWebClient authServiceWebClient;
 
     @Test
-    void register_shouldReturnMono() {
+    void register_ShouldReturnTokens_WhenAuthServiceResponds() {
         UserRegistrationResponse user = UserRegistrationResponseGenerator.generateUser();
         AccessAndRefreshTokenResponse tokenResponse = AccessAndRefreshTokenResponseGenerator.generateTokens();
 
         when(webClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri("/auth/register")).thenReturn(requestBodySpec);
+        when(requestBodyUriSpec.uri(TestConstants.AUTH_REGISTER_URI)).thenReturn(requestBodySpec);
         when(requestBodySpec.bodyValue(user)).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(AccessAndRefreshTokenResponse.class))
@@ -62,18 +63,14 @@ class AuthServiceWebClientTest {
     }
 
     @Test
-    void deleteUser_shouldReturnMonoVoid() {
-        Long userId = 123L;
-
-        // DELETE-mock
+    void deleteUser_ShouldComplete_WhenAuthServiceDeletesUser() {
         when(webClient.delete()).thenReturn(deleteRequestHeadersUriSpec);
-        when(deleteRequestHeadersUriSpec.uri("/api/internal/auth/user/{id}", userId))
+        when(deleteRequestHeadersUriSpec.uri(TestConstants.AUTH_DELETE_URI, TestConstants.WEBCLIENT_USER_ID))
                 .thenReturn(deleteRequestHeadersSpec);
         when(deleteRequestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.toBodilessEntity()).thenReturn(Mono.just(ResponseEntity.noContent().build()));
 
-        StepVerifier.create(authServiceWebClient.deleteUser(userId))
-                .verifyComplete(); // checking that Mono<Void> has completed successfully
+        StepVerifier.create(authServiceWebClient.deleteUser(TestConstants.WEBCLIENT_USER_ID))
+                .verifyComplete();
     }
-
 }

@@ -14,7 +14,7 @@ import java.util.UUID;
 
 //  WebFilter - для всех requests к контроллерам
 @Component
-public class InternalRequestIdWebFilter implements WebFilter {
+public class InternalTraceIdWebFilter implements WebFilter {
 
     @Value("${spring.application.name}")
     private String serviceName;
@@ -23,18 +23,18 @@ public class InternalRequestIdWebFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
 
-        // Getting or generating RequestId
-        String requestId = request.getHeaders().getFirst(MdcUtil.REQUEST_ID_HEADER);
-        if (requestId == null || requestId.isBlank()) {
-            requestId = UUID.randomUUID().toString();
+        // Getting or generating TraceId
+        String traceId = request.getHeaders().getFirst(MdcUtil.TRACE_ID_HEADER);
+        if (traceId == null || traceId.isBlank()) {
+            traceId = UUID.randomUUID().toString();
         }
 
         // Adding it to the response headers
-        exchange.getResponse().getHeaders().set(MdcUtil.REQUEST_ID_HEADER, requestId);
+        exchange.getResponse().getHeaders().set(MdcUtil.TRACE_ID_HEADER, traceId);
 
-        // Мутируем запрос с requestId
+        // Мутируем запрос с traceId
         ServerHttpRequest mutatedRequest = request.mutate()
-                .header(MdcUtil.REQUEST_ID_HEADER, requestId)
+                .header(MdcUtil.TRACE_ID_HEADER, traceId)
                 .build();
 
         ServerWebExchange mutatedExchange = exchange.mutate()
@@ -42,15 +42,15 @@ public class InternalRequestIdWebFilter implements WebFilter {
                 .build();
 
         // Using contextWrite to pass values.
-        String finalRequestId = requestId;
+        String finalTraceId = traceId;
         return chain.filter(mutatedExchange)
                 .contextWrite(context -> {
                     // Добавляем значения в контекст Reactor
-                    Context updatedContext = context.put(MdcUtil.REQUEST_ID_KEY, finalRequestId)
+                    Context updatedContext = context.put(MdcUtil.TRACE_ID_KEY, finalTraceId)
                             .put(MdcUtil.SERVICE_NAME_KEY, serviceName);
 
                     // Также устанавливаем MDC для текущего потока
-                    MdcUtil.setMdc(finalRequestId, serviceName);
+                    MdcUtil.setMdc(finalTraceId, serviceName);
 
                     return updatedContext;
                 })

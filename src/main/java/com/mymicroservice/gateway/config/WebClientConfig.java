@@ -62,13 +62,13 @@ public class WebClientConfig {
         return ExchangeFilterFunction.ofRequestProcessor(clientRequest ->
                 Mono.deferContextual(contextView -> {
                     // take values from the Reactor context
-                    String requestId = contextView.getOrDefault(MdcUtil.REQUEST_ID_KEY, "");
+                    String traceId = contextView.getOrDefault(MdcUtil.TRACE_ID_KEY, "");
                     String serviceName = contextView.getOrDefault(MdcUtil.SERVICE_NAME_KEY, "GATEWAY");
 
                     ClientRequest.Builder requestBuilder = ClientRequest.from(clientRequest);
 
-                    if (!requestId.isEmpty()) {
-                        requestBuilder.header(MdcUtil.REQUEST_ID_HEADER, requestId);
+                    if (!traceId.isEmpty()) {
+                        requestBuilder.header(MdcUtil.TRACE_ID_HEADER, traceId);
                     }
 
                     requestBuilder.header("X-Internal-Call", "true");

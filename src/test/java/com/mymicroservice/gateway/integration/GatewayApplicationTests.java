@@ -1,4 +1,4 @@
-package com.mymicroservice.gateway;
+package com.mymicroservice.gateway.integration;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 class GatewayApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void contextLoads_ShouldStartApplicationContext_WhenTestProfileIsActive() {
 	}
 
 }
