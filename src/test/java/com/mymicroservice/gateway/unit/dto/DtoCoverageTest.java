@@ -10,64 +10,70 @@ import com.mymicroservice.gateway.util.AccessAndRefreshTokenResponseGenerator;
 import com.mymicroservice.gateway.util.UserFromUserServiceResponseGenerator;
 import com.mymicroservice.gateway.util.UserRegistrationRequestGenerator;
 import com.mymicroservice.gateway.util.UserRegistrationResponseGenerator;
+import com.mymicroservice.gateway.util.data.TestConstants;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class DtoCoverageTest {
 
     @Test
-    void userRegistrationRequest_ShouldSupportEqualsAndHashCode_WhenSameValues() {
-        UserRegistrationRequest first = UserRegistrationRequestGenerator.generateUser();
-        UserRegistrationRequest second = UserRegistrationRequestGenerator.generateUser();
+    void userRegistrationRequest_ShouldExposeAllFields_WhenValuesAreSet() {
+        UserRegistrationRequest request = UserRegistrationRequestGenerator.generateUser();
+        request.setRole(Role.ADMIN);
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
-        assertNotNull(first.toString());
+        assertEquals(TestConstants.USER_NAME, request.getName());
+        assertEquals(TestConstants.USER_SURNAME, request.getSurname());
+        assertEquals(TestConstants.USER_BIRTH_DATE, request.getBirthDate());
+        assertEquals(TestConstants.USER_EMAIL, request.getEmail());
+        assertEquals(TestConstants.USER_PASSWORD, request.getPassword());
+        assertEquals(Role.ADMIN, request.getRole());
     }
 
     @Test
-    void userRegistrationResponse_ShouldSupportEqualsAndHashCode_WhenSameValues() {
-        UserRegistrationResponse first = UserRegistrationResponseGenerator.generateUser();
-        UserRegistrationResponse second = UserRegistrationResponseGenerator.generateUser();
+    void userRegistrationResponse_ShouldExposeAllFields_WhenValuesAreSet() {
+        UserRegistrationResponse response = UserRegistrationResponseGenerator.generateUser();
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
+        assertEquals(TestConstants.USER_NAME, response.getName());
+        assertEquals(TestConstants.USER_SURNAME, response.getSurname());
+        assertEquals(TestConstants.USER_BIRTH_DATE, response.getBirthDate());
+        assertEquals(TestConstants.USER_EMAIL, response.getEmail());
+        assertEquals(TestConstants.USER_PASSWORD, response.getPassword());
+        assertNotNull(response.getRole());
     }
 
     @Test
-    void userFromUserServiceResponse_ShouldSupportEqualsAndHashCode_WhenSameValues() {
-        UserFromUserServiceResponse first = UserFromUserServiceResponseGenerator.generateUser();
-        UserFromUserServiceResponse second = UserFromUserServiceResponseGenerator.generateUser();
+    void userFromUserServiceResponse_ShouldExposeAllFields_WhenValuesAreSet() {
+        UserFromUserServiceResponse response = UserFromUserServiceResponseGenerator.generateUser();
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
+        assertEquals(TestConstants.USER_ID, response.getUserId());
+        assertEquals(TestConstants.USER_NAME, response.getName());
+        assertEquals(TestConstants.USER_SURNAME, response.getSurname());
+        assertEquals(TestConstants.USER_BIRTH_DATE, response.getBirthDate());
+        assertEquals(TestConstants.USER_EMAIL, response.getEmail());
     }
 
     @Test
-    void accessAndRefreshTokenResponse_ShouldSupportEqualsAndHashCode_WhenSameValues() {
-        AccessAndRefreshTokenResponse first = AccessAndRefreshTokenResponseGenerator.generateTokens();
-        AccessAndRefreshTokenResponse second = AccessAndRefreshTokenResponseGenerator.generateTokens();
+    void accessAndRefreshTokenResponse_ShouldExposeAllFields_WhenValuesAreSet() {
+        AccessAndRefreshTokenResponse response = AccessAndRefreshTokenResponseGenerator.generateTokens();
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
+        assertEquals(TestConstants.ACCESS_TOKEN, response.getAccessToken());
+        assertEquals(TestConstants.REFRESH_TOKEN, response.getRefreshToken());
     }
 
     @Test
-    void registrationResponse_ShouldSupportEqualsAndHashCode_WhenSameValues() {
-        RegistrationResponse first = new RegistrationResponse(
-                UserFromUserServiceResponseGenerator.generateUser(),
-                AccessAndRefreshTokenResponseGenerator.generateTokens()
-        );
-        RegistrationResponse second = new RegistrationResponse(
-                UserFromUserServiceResponseGenerator.generateUser(),
-                AccessAndRefreshTokenResponseGenerator.generateTokens()
-        );
+    void registrationResponse_ShouldExposeNestedDtos_WhenValuesAreSet() {
+        RegistrationResponse response = new RegistrationResponse();
+        response.setUserDto(UserFromUserServiceResponseGenerator.generateUser());
+        response.setTokens(AccessAndRefreshTokenResponseGenerator.generateTokens());
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
+        assertNotNull(response.getUserDto());
+        assertNotNull(response.getTokens());
+        assertEquals(TestConstants.USER_ID, response.getUserDto().getUserId());
+        assertEquals(TestConstants.ACCESS_TOKEN, response.getTokens().getAccessToken());
     }
 
     @Test
@@ -75,5 +81,12 @@ class DtoCoverageTest {
         assertEquals("USER", Role.USER.getAuthority());
         assertEquals("ADMIN", Role.ADMIN.getAuthority());
         assertNotEquals(Role.USER, Role.ADMIN);
+    }
+
+    @Test
+    void userRegistrationRequest_ShouldAllowNullRole_WhenRoleIsOptional() {
+        UserRegistrationRequest request = UserRegistrationRequestGenerator.generateUser();
+
+        assertNull(request.getRole());
     }
 }

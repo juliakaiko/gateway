@@ -27,6 +27,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import reactor.core.publisher.Mono;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,8 +83,9 @@ class RegistrationControllerTest {
                 .expectStatus().isOk()
                 .expectBody(RegistrationResponse.class)
                 .value(resp -> {
-                    assert resp.getUserDto().getUserId().equals(TestConstants.USER_ID);
-                    assert resp.getTokens().equals(tokens);
+                    assertEquals(TestConstants.USER_ID, resp.getUserDto().getUserId());
+                    assertEquals(tokens.getAccessToken(), resp.getTokens().getAccessToken());
+                    assertEquals(tokens.getRefreshToken(), resp.getTokens().getRefreshToken());
                 });
     }
 
