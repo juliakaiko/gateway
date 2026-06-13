@@ -32,10 +32,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 5. Build and test with Maven
+      # 5. Build, test and generate JaCoCo report (report is bound to verify phase)
       - name: Build and test with Maven
         run: |
-          mvn clean package -DskipTests
+          mvn -B clean verify
 
       # 6. SonarCloud Scan
       - name: Check JaCoCo
@@ -45,7 +45,7 @@ jobs:
 
       - name: SonarCloud Scan
         run: |
-          mvn -B clean verify sonar:sonar \
+          mvn -B sonar:sonar \
             -Dsonar.projectKey=juliakaiko_gateway \
             -Dsonar.projectName=gateway \
             -Dsonar.organization=juliakaiko \
