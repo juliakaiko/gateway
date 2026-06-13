@@ -86,6 +86,24 @@ class CorsHeadersWriterTest {
         assertNull(exchange.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS));
     }
 
+    @Test
+    void applyCorsHeaders_ShouldSkipCredentialsHeader_WhenAllowCredentialsIsNull() {
+        CorsProperties properties = createCorsProperties();
+        properties.setAllowCredentials(null);
+        CorsHeadersWriter writer = new CorsHeadersWriter(properties);
+
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/profile")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:3000")
+                        .build()
+        );
+
+        writer.applyCorsHeaders(exchange);
+
+        assertEquals("http://localhost:3000", exchange.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+        assertNull(exchange.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS));
+    }
+
     private CorsProperties createCorsProperties() {
         CorsProperties properties = new CorsProperties();
         properties.setAllowedOriginPatterns(List.of("http://localhost:3000"));

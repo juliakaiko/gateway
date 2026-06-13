@@ -205,6 +205,8 @@ src/test/java/com/mymicroservice/gateway/
 <имяМетода>_Should<Ожидание>_When<Условие>
 ```
 
+ConfigurationProperties-классы (`CorsProperties`, `GatewayCustomProperties`) используют `@Getter`/`@Setter` вместо `@Data`, чтобы не генерировать `equals`/`hashCode` — для Spring binding они не нужны, а Sonar/JaCoCo иначе считает десятки непокрытых веток в Lombok-коде.
+
 Примеры:
 - `register_ShouldReturnOk_WhenBothServicesSucceed`
 - `filter_ShouldForwardRequest_WhenJwtIsMissing`

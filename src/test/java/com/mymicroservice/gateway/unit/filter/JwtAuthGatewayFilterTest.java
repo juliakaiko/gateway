@@ -244,6 +244,24 @@ class JwtAuthGatewayFilterTest {
     }
 
     @Test
+    void filter_ShouldUseEmptyInternalPaths_WhenInternalPathsAreNull() {
+        gatewayCustomProperties.setInternalPaths(null);
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/my-login-page")
+                        .header(HttpHeaders.AUTHORIZATION, TestConstants.BEARER_PREFIX + TestConstants.TEST_JWT)
+                        .build()
+        );
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain))
+                .verifyComplete();
+
+        ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
+        verify(chain).filter(captor.capture());
+        assertEquals("true", captor.getValue().getRequest().getHeaders().getFirst("X-Internal-Call"));
+    }
+
+    @Test
     void getOrder_ShouldReturnHighestPrecedence_WhenCalled() {
         assertEquals(Integer.MIN_VALUE, filter.getOrder());
     }
