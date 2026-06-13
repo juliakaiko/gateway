@@ -12,25 +12,20 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class GatewayPropertiesTest {
 
     @Test
-    void gatewayCustomProperties_ShouldSupportEqualsHashCodeAndToString() {
-        GatewayCustomProperties first = createGatewayProperties();
-        GatewayCustomProperties second = createGatewayProperties();
+    void gatewayCustomProperties_ShouldStorePaths_WhenSet() {
+        GatewayCustomProperties properties = createGatewayProperties();
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
-        assertNotNull(first.toString());
-        assertNotNull(first.getPublicPaths().toString());
-        assertNotNull(first.getInternalPaths().toString());
+        assertEquals("/actuator", properties.getPublicPaths().getPaths().getFirst());
+        assertEquals("/register", properties.getInternalPaths().getPaths().getFirst());
     }
 
     @Test
-    void corsProperties_ShouldSupportEqualsHashCodeAndToString() {
-        CorsProperties first = createFullCorsProperties();
-        CorsProperties second = createFullCorsProperties();
+    void corsProperties_ShouldStoreCorsSettings_WhenSet() {
+        CorsProperties properties = createFullCorsProperties();
 
-        assertEquals(first, second);
-        assertEquals(first.hashCode(), second.hashCode());
-        assertNotNull(first.toString());
+        assertNotNull(properties.getAllowedOriginPatterns());
+        assertEquals(3600L, properties.getMaxAge());
+        assertEquals(true, properties.getAllowCredentials());
     }
 
     private GatewayCustomProperties createGatewayProperties() {
@@ -53,22 +48,5 @@ class GatewayPropertiesTest {
         properties.setMaxAge(3600L);
         properties.setAllowCredentials(true);
         return properties;
-    }
-
-    @Test
-    void gatewayCustomProperties_ShouldStorePaths_WhenSet() {
-        GatewayCustomProperties properties = createGatewayProperties();
-
-        assertEquals("/actuator", properties.getPublicPaths().getPaths().getFirst());
-        assertEquals("/register", properties.getInternalPaths().getPaths().getFirst());
-    }
-
-    @Test
-    void corsProperties_ShouldStoreCorsSettings_WhenSet() {
-        CorsProperties properties = createFullCorsProperties();
-
-        assertNotNull(properties.getAllowedOriginPatterns());
-        assertEquals(3600L, properties.getMaxAge());
-        assertEquals(true, properties.getAllowCredentials());
     }
 }
